@@ -1,13 +1,39 @@
 #ifndef WATER_TOOLS_SERIALIZE_STREAM_H
 #define WATER_TOOLS_SERIALIZE_STREAM_H
 
+#include <type_traits>
 #include <cstring>
+
 #include <string>
 #include <vector>
 #include <set>
 #include <map>
+#include <unordered_set>
+#include <unordered_map>
 #include <list>
 #include <forward_list>
+
+
+class SerializeStreamException
+{
+public:
+    SerializeStreamException(const std::string& info)
+    : m_info(info)
+    {
+    }
+
+    virtual ~SerializeStreamException()
+    {
+    }
+
+    const std::string& what() const
+    {
+        return m_info;
+    }
+
+private:
+    const std::string& m_info;
+};
 
 
 class SerializeStream
@@ -17,8 +43,14 @@ public:
 
     typedef Buffer::size_type size_type;
 
-    SerializeStream() = default;
+    SerializeStream(uint8_t* buf, uint32_t bufSize)
+    {
+    }
     ~SerializeStream() = default;
+
+    inline copy(uint8_t* buf, uint32_t bufSize)
+    {
+    }
 
     inline size_type tellg() const
     {
@@ -35,30 +67,6 @@ public:
         buffer.clear();
         ipos = 0;
         opos = 0;
-    }
-
-
-    //pod type
-    template <typename T>
-    inline SerializeStream& operator << (const T& t)
-    {
-        buffer.append((const uint8_t*)&t, sizeof(t));
-        opos += sizeof(t);
-
-        return *this;
-    }
-
-    template <typename T>
-    inline SerializeStream& operator >> (T& t)
-    {
-        uint8_t* p = (uint8_t*)&t;
-        for(size_type i = 0; i < sizeof(t) && ipos < buffer.size(); ++i)
-        {
-            *(p + i) = buffer.at(ipos);
-            ++ipos;
-        }
-            
-        return *this;
     }
 
     //std::string
@@ -297,13 +305,55 @@ public:
         return *this;
     }
 
-private:
+    //type without corresponding operator << ; non trivial type whill occur a compile error
     template <typename T>
-    inline SerializeStream& operator << (const T&);
+    inline SerializeStream& operator << (const T& t)
+    {
+        serialize(t, std::integral_constant<bool, std::is_trivially_copyable<T>);
+        return *this;
+    }
+
     template <typename T>
-    inline SerializeStream& operator >> (T&);
+    inline SerializeStream& operator >> (T& t)
+    {
+        serialize(t, std::integral_constant<bool, std::is_trivially_copyable<T>);
+        return *this;
+    }
 
 private:
+    //serialize trivial type
+    template <typename TrivialType>
+    inline serialize(const TrivialType& t, std::true_type)
+    {
+        buffer.append((const uint8_t*)&t, sizeof(t));
+        opos += sizeof(t);
+
+        return *this;
+    
+    }
+
+    //serialize non - trivial type
+    template <typename NonTrivialType>
+    inline serialize(const NonTrivialType&, std::true_type);
+
+    //deserializeContainer trivial type
+    template <typename TrivialType>
+    inline deserialize(const TrivialType& t, std::true_type)
+    {
+        uint8_t* p = (uint8_t*)&t;
+        for(size_type i = 0; i < sizeof(t) && ipos < buffer.size(); ++i)
+        {
+            *(p + i) = buffer.at(ipos);
+            ++ipos;
+        }
+            
+        return *this;
+    }
+
+    //deserializeContainer non-trivial type
+    template <typename NonTrivialType>
+    inline deserialize(const NonTrivialType&, std::false_type)
+
     //serialize container
     template <typename ContainerT>
     inline void serializeContainer(const ContainerT& container)
