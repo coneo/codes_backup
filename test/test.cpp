@@ -1,192 +1,64 @@
 #include "test.h"
+#include "../tools/serialize_stream.h"
 
-#include "event.h"
-#include <iostream>
-#include <chrono>
-#include <ctime>
-#include <map>
-#include <set>
-#include <forward_list>
-#include <list>
-#include <vector>
 using namespace std;
 
 
-void fun1(int i)
-{
-    cout << i << endl;
-}
-
-void fun2(int i)
-{
-    cout << i + 10 << endl;
-}
-
-void fun3(int i)
-{
-    cout << i + 100 << endl;
-}
-
 int main()
 {
-    
-/*
-    std::map<int, int> m1;
-    std::map<int, int> m2;
+    SerializeStream ss;
+
+    typedef std::string  TA;
+    TA a1{"1234"};
+    ss << a1;
+
+    TA a2;
+    ss >> a2;
+    print(a2);
+
+    typedef std::vector<int> TB;
+    TB b1{1, 2, 3, 4, 5};
+    ss << b1;
+    print(b1);
+
+    TB b2;
+    ss >> b2;
+    print(b2);
+
+
+
+    typedef std::vector<std::set<std::string>> TC;
+    TC c1{{"a", "b"}, {"c", "d"}};
+    ss << c1;
+    print(c1);
+
+    TC c2;
+    ss >> c2;
+    print(c2);
+
+
+    typedef std::vector<std::vector<int>> TD;
+    TD d1{{1, 2}, {3, 4}};
+    ss << d1;
+    print(d1);
+
+    TD d2;
+    ss >> d2;
+    print(d2);
+
+    typedef std::vector<std::pair<std::set<int>, std::string>> TE;
+    TE e1
     {
-        volatile int i = 0;
-        std::chrono::time_point<std::chrono::system_clock> start, end;
+        {{1, 2}, "12"}, 
+        {{3, 4}, "34"}
+    };
+    ss << e1;
+    print(e1);
 
-        start = std::chrono::system_clock::now();
-        for(int i = 0; i < 1000000; i++)
-            m1.insert({i, i});
-        end = std::chrono::system_clock::now();
+    TE e2;
+    ss >> e2;
+    print(e2);
 
-        cout << "m1:" << i << endl;
-
-        std::chrono::duration<double> elapsed_seconds = end-start;
-        std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-
-        std::cout << "finished computation at " << std::ctime(&end_time)
-        << "elapsed time: " << elapsed_seconds.count() << "s\n";
-    }
-    {
-        volatile int i = 0;
-        std::chrono::time_point<std::chrono::system_clock> start, end;
-
-        start = std::chrono::system_clock::now();
-        for(int i = 0; i < 1000000; i++)
-            m2.insert(m2.end(), {i, i});
-        end = std::chrono::system_clock::now();
-
-        cout << "m2:" << i << endl;
-
-        std::chrono::duration<double> elapsed_seconds = end-start;
-        std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-
-        std::cout << "finished computation at " << std::ctime(&end_time)
-        << "elapsed time: " << elapsed_seconds.count() << "s\n";
-    }
-    */
-    std::map<int, int> m;
-    std::unordered_map<int, int> u;
-    std::set<int> s;
-    std::list<int> l;
-    std::forward_list<int> f;
-    std::vector<int> v(1000000);
-
-    for(int i = 0; i < 1000000; i++)
-    {
-        m.insert({i, i});
-        u.insert({i, i});
-        s.insert({i, i});
-        l.push_back(i);
-        f.push_front(i);
-        v.push_back(i);
-    }
-
-    {
-        volatile int i = 0;
-        std::chrono::time_point<std::chrono::system_clock> start, end;
-
-        start = std::chrono::system_clock::now();
-        for(auto it = m.begin(); it != m.end(); ++it)
-            i = it->first;
-        end = std::chrono::system_clock::now();
-
-        cout << "m:" << i << endl;
-
-        std::chrono::duration<double> elapsed_seconds = end-start;
-        std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-
-        std::cout << "finished computation at " << std::ctime(&end_time)
-        << "elapsed time: " << elapsed_seconds.count() << "s\n";
-    }
-    {
-        volatile int i = 0;
-        std::chrono::time_point<std::chrono::system_clock> start, end;
-
-        start = std::chrono::system_clock::now();
-        for(auto it = u.begin(); it != u.end(); ++it)
-            i = it->first;
-        end = std::chrono::system_clock::now();
-
-        cout << "u:" << i << endl;
-
-        std::chrono::duration<double> elapsed_seconds = end-start;
-        std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-
-        std::cout << "finished computation at " << std::ctime(&end_time)
-        << "elapsed time: " << elapsed_seconds.count() << "s\n";
-    }
-    {
-        volatile int i = 0;
-        std::chrono::time_point<std::chrono::system_clock> start, end;
-
-        start = std::chrono::system_clock::now();
-        for(auto it = s.begin(); it != s.end(); ++it)
-            i = *it;
-        end = std::chrono::system_clock::now();
-        
-        cout << "s:" << i << endl;
-
-        std::chrono::duration<double> elapsed_seconds = end-start;
-        std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-
-        std::cout << "finished computation at " << std::ctime(&end_time)
-        << "elapsed time: " << elapsed_seconds.count() << "s\n";
-    }
-    {
-        volatile int i = 0;
-        std::chrono::time_point<std::chrono::system_clock> start, end;
-
-        start = std::chrono::system_clock::now();
-        for(auto it = l.begin(); it != l.end(); ++it)
-            i = *it;
-        end = std::chrono::system_clock::now();
-        
-        cout << "l:" << i << endl;
-
-        std::chrono::duration<double> elapsed_seconds = end-start;
-        std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-
-        std::cout << "finished computation at " << std::ctime(&end_time)
-        << "elapsed time: " << elapsed_seconds.count() << "s\n";
-    }
-    {
-        volatile int i = 0;
-        std::chrono::time_point<std::chrono::system_clock> start, end;
-
-        start = std::chrono::system_clock::now();
-        for(auto it = f.begin(); it != f.end(); ++it)
-            i = *it;
-        end = std::chrono::system_clock::now();
-        
-        cout << "f:" << i << endl;
-
-        std::chrono::duration<double> elapsed_seconds = end-start;
-        std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-
-        std::cout << "finished computation at " << std::ctime(&end_time)
-        << "elapsed time: " << elapsed_seconds.count() << "s\n";
-    }
-    {
-        volatile int i = 0;
-        std::chrono::time_point<std::chrono::system_clock> start, end;
-
-        start = std::chrono::system_clock::now();
-        for(auto it = v.begin(); it != v.end(); ++it)
-            i = *it;
-        end = std::chrono::system_clock::now();
-        
-        cout << "v:" << i << endl;
-
-        std::chrono::duration<double> elapsed_seconds = end-start;
-        std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-
-        std::cout << "finished computation at " << std::ctime(&end_time)
-        << "elapsed time: " << elapsed_seconds.count() << "s\n";
-    }
     return 0;
 }
 
