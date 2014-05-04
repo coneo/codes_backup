@@ -4,8 +4,6 @@ objects = \
     listener.o\
     connection.o\
     socket.o\
-    base.o\
-    scope_guard.o\
 
 CC = g++-4.7.3
 cc = g++-4.7.3

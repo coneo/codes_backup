@@ -8,7 +8,7 @@
 #include <string>
 #include <cstring>
 #include <iostream>
-#include "exception.h"
+#include "../base/exception.h"
 #include "scope_guard.h"
 
 namespace net
@@ -99,10 +99,6 @@ int main()
         auto ip = net::IpV4::getAddrByIfrName("enp0s3");
         cout << ip.toString() << "[" << ip.value << "]" << endl;
 
-        std::set<std::string> strlist;
-        net::tool::splitString(&strlist, "asd,,f,gh,", ",");
-        for(auto str : strlist)
-            cout << str << endl;
         net::IpV4 ip2;
         ip2.fromString("1.2.3.4");
         cout << ip2.value << endl;
