@@ -14,6 +14,9 @@
 #include <string>
 #include <sstream>
 
+#include <list>
+#include <forward_list>
+
 #include <exception>
 #include <stdexcept>
 

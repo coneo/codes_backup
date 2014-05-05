@@ -59,6 +59,13 @@ int main()
     ss >> e2;
     print(e2);
 
+    typedef std::list<std::list<int>> TF;
+    TF f1{{1,2,3}, {4,5,6}};
+    ss << f1;
+    
+    TF f2;
+    ss >> f2;
+    print(f2);
     return 0;
 }
 
