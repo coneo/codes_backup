@@ -6,7 +6,8 @@
 #include <vector>
 #include <set>
 #include <map>
-
+#include <list>
+#include <forward_list>
 
 
 class SerializeStream
@@ -101,7 +102,6 @@ public:
         return *this;
     }
 
-
     //std::vector
     template <typename T>
     inline SerializeStream& operator << (const std::vector<T>& vec)
@@ -112,6 +112,21 @@ public:
 
     template <typename T>
     inline SerializeStream& operator >> (std::vector<T>& vec)
+    {
+        deserializeRandomAccessContainer(vec);
+        return *this;
+    }
+
+    //std::basic_string
+    template <typename T>
+    inline SerializeStream& operator << (const std::basic_string<T>& vec)
+    {
+        serializeContainer(vec);
+        return *this;
+    }
+
+    template <typename T>
+    inline SerializeStream& operator >> (std::basic_string<T>& vec)
     {
         deserializeRandomAccessContainer(vec);
         return *this;
@@ -131,6 +146,162 @@ public:
         deserializeContainer(s);
         return *this;
     }
+
+    //std::multiset
+    template <typename T>
+    inline SerializeStream& operator << (const std::multiset<T>& s)
+    {
+        serializeContainer(s);
+        return *this;
+    }
+
+    template <typename T>
+    inline SerializeStream& operator >> (std::multiset<T>& s)
+    {
+        deserializeContainer(s);
+        return *this;
+    }
+
+    //std::unordered_set
+    template <typename T>
+    inline SerializeStream& operator << (const std::unordered_set<T>& s)
+    {
+        serializeContainer(s);
+        return *this;
+    }
+
+    template <typename T>
+    inline SerializeStream& operator >> (std::unordered_set<T>& s)
+    {
+        deserializeContainer(s);
+        return *this;
+    }
+
+    //std::unordered_multiset
+    template <typename T>
+    inline SerializeStream& operator << (const std::unordered_multiset<T>& s)
+    {
+        serializeContainer(s);
+        return *this;
+    }
+
+    template <typename T>
+    inline SerializeStream& operator >> (std::unordered_multiset<T>& s)
+    {
+        deserializeContainer(s);
+        return *this;
+    }
+
+    //std::map
+    template <typename KeyT, typename ValueT>
+    inline SerializeStream& operator << (const std::map<KeyT, ValueT>& m)
+    {
+        serializeContainer(m);
+        return *this;
+    }
+
+    template <typename KeyT, typename ValueT>
+    inline SerializeStream& operator >> (std::map<KeyT, ValueT>& m)
+    {
+        deserializeContainer(m);
+        return *this;
+    }
+
+    //std::multimap
+    template <typename KeyT, typename ValueT>
+    inline SerializeStream& operator << (const std::multimap<KeyT, ValueT>& m)
+    {
+        serializeContainer(m);
+        return *this;
+    }
+
+    template <typename KeyT, typename ValueT>
+    inline SerializeStream& operator >> (std::multimap<KeyT, ValueT>& m)
+    {
+        deserializeContainer(m);
+        return *this;
+    }
+
+    //std::unordered_map
+    template <typename KeyT, typename ValueT>
+    inline SerializeStream& operator << (const std::unordered_map<KeyT, ValueT>& m)
+    {
+        serializeContainer(m);
+        return *this;
+    }
+
+    template <typename KeyT, typename ValueT>
+    inline SerializeStream& operator >> (std::unordered_map<KeyT, ValueT>& m)
+    {
+        deserializeContainer(m);
+        return *this;
+    }
+
+    //std::unordered_multimap
+    template <typename KeyT, typename ValueT>
+    inline SerializeStream& operator << (const std::unordered_multimap<KeyT, ValueT>& m)
+    {
+        serializeContainer(m);
+        return *this;
+    }
+
+    template <typename KeyT, typename ValueT>
+    inline SerializeStream& operator >> (std::unordered_multimap<KeyT, ValueT>& m)
+    {
+        deserializeContainer(m);
+        return *this;
+    }
+
+    //std::list
+    template <typename T>
+    inline SerializeStream& operator << (const std::list<T>& l)
+    {
+        serializeContainer(l);
+        return *this;
+    }
+
+    template <typename T>
+    inline SerializeStream& operator >> (std::list<T>& l)
+    {
+        deserializeContainer(l);
+        return *this;
+    }
+
+    //std::forward_list
+    template <typename T>
+    inline SerializeStream& operator << (const std::forward_list<T>& l)
+    {
+        serializeContainer(l);
+        return *this;
+    }
+
+    template <typename T>
+    inline SerializeStream& operator >> (std::forward_list<T>& l)
+    {
+        typedef typename std::forward_list<T> ContainerT;
+
+        typename ContainerT::size_type size = 0;
+        (*this) >> size;
+
+        ContainerT::value_type tmp;
+        container.push_front(std::move(tmp));
+        ContainerT::iterator iter = l.begin();
+        for(typename ContainerT::size_type i = 0; i < size; ++i)
+        {
+            typename ContainerT::value_type t;
+            (*this) >> t;
+            iter = l.insert_after(iter, std::move(t));
+        }
+        container->pop_front();
+
+        return *this;
+    }
+
+private:
+    template <typename T>
+    inline SerializeStream& operator << (const T&);
+    template <typename T>
+    inline SerializeStream& operator >> (T&);
 
 private:
     //serialize container
@@ -157,20 +328,19 @@ private:
         {
             typename ContainerT::value_type t;
             (*this) >> t;
-            container.insert(container.end(), t);
+            container.insert(container.end(), std::move(t));
         }
     }
 
-
     //deserialize random access container
-    template <typename ContainerT>
-    inline void deserializeRandomAccessContainer(ContainerT& container)
+    template <typename RandomAccessContainerT>
+    inline void deserializeRandomAccessContainer(RandomAccessContainerT& container)
     {
-        typename ContainerT::size_type size = 0;
+        typename RandomAccessContainerT::size_type size = 0;
         (*this) >> size;
 
         container.resize(size);
-        for(typename ContainerT::size_type i = 0; i < size; ++i)
+        for(typename RandomAccessContainerT::size_type i = 0; i < size; ++i)
             (*this) >> container[i];
     }
 
