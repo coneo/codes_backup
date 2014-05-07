@@ -12,10 +12,11 @@ namespace net
         TYPEDEF_PTR(TcpSocket)
     protected:
         explicit TcpSocket();
-        explicit TcpSocket(int32_t fd, bool nonBlocking);
+        explicit TcpSocket(int32_t fd, BlockingStatus blockingStatus);
 
     public:
         enum {INVALID_SOCKET_FD = -1};
+        enum class BlockingStatus {BLOCKING, NON_BLOCKING };
 
     public:
         virtual ~TcpSocket();
@@ -42,7 +43,7 @@ namespace net
 
     private:
         int32_t m_fd;
-        bool m_nonBlocking;
+        BlockingStatus m_blockStatus;
         bool m_autoClose;
     };
 

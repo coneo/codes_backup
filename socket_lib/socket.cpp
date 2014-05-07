@@ -1,19 +1,19 @@
 #include "socket.h"
 #include "exception.h"
 #include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <unistd.h>
+#include <fcntl>
 
 
 namespace net
 {
     TcpSocket::TcpSocket()
-    : m_fd(::socket(PF_INET, SOCK_STREAM, 0)), m_nonBlocking(false), m_autoClose(true)
+    : m_fd(::socket(PF_INET, SOCK_STREAM, 0)), m_blockStatus(blockingStatus)
     {
     }
 
     TcpSocket::TcpSocket(int32_t fd, bool nonBlocking)
-    : m_fd(fd), m_nonBlocking(nonBlocking), m_autoClose(true)
+    : m_fd(fd), m_nonBlocking(nonBlocking)
     {
     }
 
@@ -21,8 +21,7 @@ namespace net
     {
         try
         {
-            if(m_autoClose)
-                close();
+            close();
         }
         catch(...)
         {
@@ -59,7 +58,7 @@ namespace net
 
     bool TcpSocket::isNonBlocking() const
     {
-        return m_nonBlocking;
+        return m_blockStatus == BlockingStatus::NON_BLOCKING;
     }
 
     void TcpSocket::setNonBlocking()
@@ -67,11 +66,13 @@ namespace net
         if(isNonBlocking())
             return;
 
-        int32_t flag = 1;
-        if(-1 == ::ioctl(getFD(), FIONBIO, (void *)&flag))
-            SYS_EXCEPTION(::ioctl)
+        int32_t flags = fcntl(fd, F_GETFL, 0);
+        if(-1 == flags)
+            SYS_EXCEPTION(::fcntl);
+        if(-1 == ::fcntl(fd, F_SETFL, flags | O_NONBLOCK))
+            SYS_EXCEPTION(::fcntl);
 
-        m_nonBlocking = true;
+        m_blockStatus = BlockingStatus::NON_BLOCKING;
     }
 
     void TcpSocket::bind(uint16_t port)
