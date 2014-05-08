@@ -14,55 +14,144 @@
 #include <forward_list>
 
 
-class SerializeStreamException
+#define GCC_VERSION (__GNUC__ * 10000 \
+                     + __GNUC_MINOR__ * 100 \
+                     + __GNUC_PATCHLEVEL__)
+
+class RawMemoryBuffer
 {
 public:
-    SerializeStreamException(const std::string& info)
-    : m_info(info)
+    typedef uint32_t size_type;
+    typedef uint8_t value_type;
+/*
+    explicit RawMemoryBuffer(value_type* buf, size_type bufSize)
+    :m_rawBuffer(buf), m_bufSize(bufSize)
     {
     }
+*/
+    RawMemoryBuffer() = default;
+    ~RawMemoryBuffer() = default;
 
-    virtual ~SerializeStreamException()
+    RawMemoryBuffer(const RawMemoryBuffer&) = delete;
+    RawMemoryBuffer& operator=(const RawMemoryBuffer&) = delete;
+
+    RawMemoryBuffer(RawMemoryBuffer&& other)
     {
+        
+        m_bufSize = other.m_bufSize;
+        m_rawBuffer= other.m_rawBuffer;
+
+        other.clear();
     }
 
-    const std::string& what() const
+    inline size_type size() const
     {
-        return m_info;
+        return m_size;
+    }
+
+    inline void clear()
+    {
+        m_size = 0;
+        m_bufSize = 0;
+    }
+
+    inline value_type* data() const
+    {
+        return m_rawBuffer;
+    }
+
+    inline value_type at(size_type pos) const
+    {
+        return m_rawBuffer[pos];
+    }
+
+    inline value_type& at(size_type pos)
+    {
+        return m_rawBuffer[pos];
+    }
+
+    inline void assign(value_type* buf, size_type bufSize)
+    {
+        m_rawBuffer = buf;
+        m_bufSize = bufSize;
+        m_size = 0;
+    }
+
+    inline void swap(RawMemoryBuffer& other)
+    {
+        size_type tempS = m_bufSize;
+        m_bufSize = other.m_bufSize;
+        other.m_bufSize = tempS;
+
+        value_type* tempB = m_rawBuffer;
+        m_rawBuffer = other.m_rawBuffer;
+        other.m_rawBuffer = tempB;
+    }
+
+    inline size_type copy(value_type* buf, size_type len, size_type pos = 0) const
+    {
+        if(m_size < pos)
+            return 0;
+
+        size_type ret = m_size - pos < len ? m_size - pos : len;
+        ::memcpy(buf, m_rawBuffer + pos, ret);
+        return ret;
+    }
+
+    inline size_type append(const value_type* buf, size_type len)
+    {
+        size_type ret = m_bufSize - m_size < len ? m_size - m_bufSize : len;
+        ::memcpy(m_rawBuffer + m_size, buf, ret);
+        m_size += ret;
+        return ret;
     }
 
 private:
-    const std::string& m_info;
+    size_type m_size = 0;
+    value_type* m_rawBuffer = nullptr;
+    size_type m_bufSize = 0;
 };
 
 
+template<typename Buffer = std::basic_string<uint8_t>>
 class SerializeStream
 {
-    typedef std::basic_string<uint8_t> Buffer;
 public:
 
-    typedef Buffer::size_type size_type;
+    typedef typename Buffer::size_type size_type;
 
-    SerializeStream(uint8_t* buf, uint32_t bufSize)
-    {
-    }
+    SerializeStream() = default;
     ~SerializeStream() = default;
 
-    inline copy(uint8_t* buf, uint32_t bufSize)
+    SerializeStream(SerializeStream&& other)
     {
+        clear();
+        buffer.swap(other.buffer);
     }
 
-    inline size_type tellg() const
+    void assign(const void* buf, uint32_t bufSize)
+    {
+        typename Buffer::value_type* p = (typename Buffer::value_type*)buf;
+        clear();
+        buffer.assign(p, bufSize);
+    }
+
+    uint32_t copy(void* buf, uint32_t bufSize)
+    {
+        return buffer.copy(buf, bufSize);
+    }
+
+    size_type tellg() const
     {
         return ipos;
     }
 
-    inline size_type tellp() const
+    size_type tellp() const
     {
         return opos;
     }
 
-    inline void reset()
+    void clear()
     {
         buffer.clear();
         ipos = 0;
@@ -70,17 +159,17 @@ public:
     }
 
     //std::string
-    inline SerializeStream& operator << (const std::string& str)
+    SerializeStream& operator << (const std::string& str)
     {
         (*this) << str.size();
 
-        buffer.append((const uint8_t*)str.data(), str.size());
+        buffer.append((const typename Buffer::value_type*)str.data(), str.size());
         opos += str.size();
 
         return *this;
     }
 
-    inline SerializeStream& operator >> (std::string& str)
+    SerializeStream& operator >> (std::string& str)
     {
         std::string::size_type size = 0;
         (*this) >> size;
@@ -93,7 +182,7 @@ public:
 
     //std::pair
     template <typename T1, typename T2>
-    inline SerializeStream& operator << (const std::pair<T1, T2>& pair)
+    SerializeStream& operator << (const std::pair<T1, T2>& pair)
     {
         (*this) << pair.first;
         (*this) << pair.second;
@@ -102,7 +191,7 @@ public:
     }
 
     template <typename T1, typename T2>
-    inline SerializeStream& operator >> (std::pair<T1, T2>& pair)
+    SerializeStream& operator >> (std::pair<T1, T2>& pair)
     {
         (*this) >> pair.first;
         (*this) >> pair.second;
@@ -112,14 +201,14 @@ public:
 
     //std::vector
     template <typename T>
-    inline SerializeStream& operator << (const std::vector<T>& vec)
+    SerializeStream& operator << (const std::vector<T>& vec)
     {
         serializeContainer(vec);
         return *this;
     }
 
     template <typename T>
-    inline SerializeStream& operator >> (std::vector<T>& vec)
+    SerializeStream& operator >> (std::vector<T>& vec)
     {
         deserializeRandomAccessContainer(vec);
         return *this;
@@ -127,14 +216,14 @@ public:
 
     //std::basic_string
     template <typename T>
-    inline SerializeStream& operator << (const std::basic_string<T>& vec)
+    SerializeStream& operator << (const std::basic_string<T>& vec)
     {
         serializeContainer(vec);
         return *this;
     }
 
     template <typename T>
-    inline SerializeStream& operator >> (std::basic_string<T>& vec)
+    SerializeStream& operator >> (std::basic_string<T>& vec)
     {
         deserializeRandomAccessContainer(vec);
         return *this;
@@ -142,14 +231,14 @@ public:
 
     //std::set
     template <typename T>
-    inline SerializeStream& operator << (const std::set<T>& s)
+    SerializeStream& operator << (const std::set<T>& s)
     {
         serializeContainer(s);
         return *this;
     }
 
     template <typename T>
-    inline SerializeStream& operator >> (std::set<T>& s)
+    SerializeStream& operator >> (std::set<T>& s)
     {
         deserializeContainer(s);
         return *this;
@@ -157,14 +246,14 @@ public:
 
     //std::multiset
     template <typename T>
-    inline SerializeStream& operator << (const std::multiset<T>& s)
+    SerializeStream& operator << (const std::multiset<T>& s)
     {
         serializeContainer(s);
         return *this;
     }
 
     template <typename T>
-    inline SerializeStream& operator >> (std::multiset<T>& s)
+    SerializeStream& operator >> (std::multiset<T>& s)
     {
         deserializeContainer(s);
         return *this;
@@ -172,14 +261,14 @@ public:
 
     //std::unordered_set
     template <typename T>
-    inline SerializeStream& operator << (const std::unordered_set<T>& s)
+    SerializeStream& operator << (const std::unordered_set<T>& s)
     {
         serializeContainer(s);
         return *this;
     }
 
     template <typename T>
-    inline SerializeStream& operator >> (std::unordered_set<T>& s)
+    SerializeStream& operator >> (std::unordered_set<T>& s)
     {
         deserializeContainer(s);
         return *this;
@@ -187,14 +276,14 @@ public:
 
     //std::unordered_multiset
     template <typename T>
-    inline SerializeStream& operator << (const std::unordered_multiset<T>& s)
+    SerializeStream& operator << (const std::unordered_multiset<T>& s)
     {
         serializeContainer(s);
         return *this;
     }
 
     template <typename T>
-    inline SerializeStream& operator >> (std::unordered_multiset<T>& s)
+    SerializeStream& operator >> (std::unordered_multiset<T>& s)
     {
         deserializeContainer(s);
         return *this;
@@ -202,14 +291,14 @@ public:
 
     //std::map
     template <typename KeyT, typename ValueT>
-    inline SerializeStream& operator << (const std::map<KeyT, ValueT>& m)
+    SerializeStream& operator << (const std::map<KeyT, ValueT>& m)
     {
         serializeContainer(m);
         return *this;
     }
 
     template <typename KeyT, typename ValueT>
-    inline SerializeStream& operator >> (std::map<KeyT, ValueT>& m)
+    SerializeStream& operator >> (std::map<KeyT, ValueT>& m)
     {
         deserializeContainer(m);
         return *this;
@@ -217,14 +306,14 @@ public:
 
     //std::multimap
     template <typename KeyT, typename ValueT>
-    inline SerializeStream& operator << (const std::multimap<KeyT, ValueT>& m)
+    SerializeStream& operator << (const std::multimap<KeyT, ValueT>& m)
     {
         serializeContainer(m);
         return *this;
     }
 
     template <typename KeyT, typename ValueT>
-    inline SerializeStream& operator >> (std::multimap<KeyT, ValueT>& m)
+    SerializeStream& operator >> (std::multimap<KeyT, ValueT>& m)
     {
         deserializeContainer(m);
         return *this;
@@ -232,14 +321,14 @@ public:
 
     //std::unordered_map
     template <typename KeyT, typename ValueT>
-    inline SerializeStream& operator << (const std::unordered_map<KeyT, ValueT>& m)
+    SerializeStream& operator << (const std::unordered_map<KeyT, ValueT>& m)
     {
         serializeContainer(m);
         return *this;
     }
 
     template <typename KeyT, typename ValueT>
-    inline SerializeStream& operator >> (std::unordered_map<KeyT, ValueT>& m)
+    SerializeStream& operator >> (std::unordered_map<KeyT, ValueT>& m)
     {
         deserializeContainer(m);
         return *this;
@@ -247,14 +336,14 @@ public:
 
     //std::unordered_multimap
     template <typename KeyT, typename ValueT>
-    inline SerializeStream& operator << (const std::unordered_multimap<KeyT, ValueT>& m)
+    SerializeStream& operator << (const std::unordered_multimap<KeyT, ValueT>& m)
     {
         serializeContainer(m);
         return *this;
     }
 
     template <typename KeyT, typename ValueT>
-    inline SerializeStream& operator >> (std::unordered_multimap<KeyT, ValueT>& m)
+    SerializeStream& operator >> (std::unordered_multimap<KeyT, ValueT>& m)
     {
         deserializeContainer(m);
         return *this;
@@ -262,14 +351,14 @@ public:
 
     //std::list
     template <typename T>
-    inline SerializeStream& operator << (const std::list<T>& l)
+    SerializeStream& operator << (const std::list<T>& l)
     {
         serializeContainer(l);
         return *this;
     }
 
     template <typename T>
-    inline SerializeStream& operator >> (std::list<T>& l)
+    SerializeStream& operator >> (std::list<T>& l)
     {
         deserializeContainer(l);
         return *this;
@@ -277,28 +366,28 @@ public:
 
     //std::forward_list
     template <typename T>
-    inline SerializeStream& operator << (const std::forward_list<T>& l)
+    SerializeStream& operator << (const std::forward_list<T>& container)
     {
-        serializeContainer(l);
+        serializeContainer(container);
         return *this;
     }
 
     template <typename T>
-    inline SerializeStream& operator >> (std::forward_list<T>& l)
+    SerializeStream& operator >> (std::forward_list<T>& container)
     {
         typedef typename std::forward_list<T> ContainerT;
 
         typename ContainerT::size_type size = 0;
         (*this) >> size;
 
-        ContainerT::value_type tmp;
+        typename ContainerT::value_type tmp;
         container.push_front(std::move(tmp));
-        ContainerT::iterator iter = l.begin();
+        typename ContainerT::iterator iter = container.begin();
         for(typename ContainerT::size_type i = 0; i < size; ++i)
         {
             typename ContainerT::value_type t;
             (*this) >> t;
-            iter = l.insert_after(iter, std::move(t));
+            iter = container.insert_after(iter, std::move(t));
         }
         container->pop_front();
 
@@ -307,56 +396,52 @@ public:
 
     //type without corresponding operator << ; non trivial type whill occur a compile error
     template <typename T>
-    inline SerializeStream& operator << (const T& t)
+    SerializeStream& operator << (const T& t)
     {
-        serialize(t, std::integral_constant<bool, std::is_trivially_copyable<T>);
+        serialize(t, std::integral_constant<bool, std::is_trivial<T>::value>());//std::is_trivially_copyable<T>);
         return *this;
     }
 
     template <typename T>
-    inline SerializeStream& operator >> (T& t)
+    SerializeStream& operator >> (T& t)
     {
-        serialize(t, std::integral_constant<bool, std::is_trivially_copyable<T>);
+//#if GCC_VERSION > 
+        deserialize(t, std::integral_constant<bool, std::is_trivial<T>::value>());//std::is_trivially_copyable<T>);
         return *this;
     }
 
 private:
     //serialize trivial type
     template <typename TrivialType>
-    inline serialize(const TrivialType& t, std::true_type)
+    void serialize(const TrivialType& t, std::true_type)
     {
-        buffer.append((const uint8_t*)&t, sizeof(t));
+        buffer.append((const typename Buffer::value_type*)&t, sizeof(t));
         opos += sizeof(t);
-
-        return *this;
-    
     }
 
     //serialize non - trivial type
-    template <typename NonTrivialType>
-    inline serialize(const NonTrivialType&, std::true_type);
+    template <typename TrivialType>
+    void serialize(const TrivialType&, std::false_type);
 
     //deserializeContainer trivial type
     template <typename TrivialType>
-    inline deserialize(const TrivialType& t, std::true_type)
+    void deserialize(const TrivialType& t, std::true_type)
     {
-        uint8_t* p = (uint8_t*)&t;
+        typename Buffer::value_type* p = (typename Buffer::value_type*)&t;
         for(size_type i = 0; i < sizeof(t) && ipos < buffer.size(); ++i)
         {
             *(p + i) = buffer.at(ipos);
             ++ipos;
         }
-            
-        return *this;
     }
 
     //deserializeContainer non-trivial type
-    template <typename NonTrivialType>
-    inline deserialize(const NonTrivialType&, std::false_type)
+    template <typename TrivialType>
+    void deserialize(const TrivialType&, std::false_type);
 
     //serialize container
     template <typename ContainerT>
-    inline void serializeContainer(const ContainerT& container)
+    void serializeContainer(const ContainerT& container)
     {
         typename ContainerT::size_type size = container.size();
         (*this) << size;
@@ -367,7 +452,7 @@ private:
 
     //deserialize container
     template <typename ContainerT>
-    inline void deserializeContainer(ContainerT& container)
+    void deserializeContainer(ContainerT& container)
     {
         container.clear();
 
@@ -384,7 +469,7 @@ private:
 
     //deserialize random access container
     template <typename RandomAccessContainerT>
-    inline void deserializeRandomAccessContainer(RandomAccessContainerT& container)
+    void deserializeRandomAccessContainer(RandomAccessContainerT& container)
     {
         typename RandomAccessContainerT::size_type size = 0;
         (*this) >> size;

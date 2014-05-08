@@ -22,25 +22,15 @@ namespace net
         struct sockaddr_in clientAddrIn;
         socklen_t clientAddrInSize = sizeof(clientAddrIn);
 
-        int32_t fd = -1;
-        if(isNonBlocking())
-        {
-            fd = ::accept4(getFD(), (struct sockaddr*)&clientAddrIn, &clientAddrInSize, SOCK_NONBLOCK);
-            if(-1 == fd)
-                SYS_EXCEPTION(::accept4);
-        }
-        else
-        {
-            fd = ::accept(getFD(), (struct sockaddr*)&clientAddrIn, &clientAddrInSize);
-            if(-1 == fd)
-                SYS_EXCEPTION(::accept);
-        }
+        int32_t fd = ::accept(getFD(), (struct sockaddr*)&clientAddrIn, &clientAddrInSize);
+        if(-1 == fd)
+            SYS_EXCEPTION(::accept);
 
         EndPoint remoteEndPoint;
         remoteEndPoint.ip.value = clientAddrIn.sin_addr.s_addr;     //远端ip
         remoteEndPoint.port     = ::ntohs(clientAddrIn.sin_port);   //远端port
         
-        TcpConnection::Ptr ret = TcpConnection::create(fd, isNonBlocking(), remoteEndPoint);
+        TcpConnection::Ptr ret = TcpConnection::create(fd, false, remoteEndPoint);
         return ret;
     }
 
