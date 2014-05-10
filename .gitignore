@@ -6,3 +6,7 @@
 *.swp
 core
 core.*
+*.a
+test
+tmp
+temp
