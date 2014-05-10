@@ -24,47 +24,51 @@
 #include <exception>
 #include <stdexcept>
 
-template<typename T1, typename T2>
-void print(const std::pair<T1, T2>& pair, const std::string& delimiter = " ");
-
-template<typename Continer>
-void print(const Continer& con, const std::string& delimiter = " ");
-
-void print(const std::string& str, const std::string& delimiter = " ")
-{
-    std::cout << str << delimiter;
-}
-
-void print(const int& num, const std::string& delimiter = " ")
-{
-    std::cout << num << delimiter;
-}
-
-void print(const long& num, const std::string& delimiter = " ")
-{
-    std::cout << num << delimiter;
-}
-
-void print(const unsigned long& num, const std::string& delimiter = " ")
-{
-    std::cout << num << delimiter;
-}
 
 template<typename T1, typename T2>
-void print(const std::pair<T1, T2>& pair, const std::string& delimiter = " ")
+std::ostream& operator << (std::ostream& os, const std::pair<T1, T2>& pair)
 {
-    std::cout << "{";
-    print(pair.first, delimiter);
-    std::cout << ',';
-    print(pair.second, delimiter);
-    std::cout << "}" << delimiter;
+    os << "{";
+    os << pair.first << " ";
+    os << ',';
+    os << pair.second << " ";
+    os << "}" << " ";
 }
 
-template<typename Continer>
-void print(const Continer& con, const std::string& delimiter = " ")
-{
-    std::cout << "{";
-    for(const auto& item : con)
-        print(item, delimiter);
-    std::cout << "}";
+
+#define SENQUENTIAL_CONTAINER_OSTREAM_OPERATOR(Container) \
+template<typename T>\
+std::ostream& operator << (std::ostream& os, const Container<T>& con)\
+{\
+    os << "{";\
+    for(const auto& item : con)\
+        os << item << " ";\
+    os << "}";\
+    return os;\
 }
+
+#define ASSOCIATIVE_CONTAINER_OSTREAM_OPERATOR(Container) \
+template<typename T1, typename T2>\
+std::ostream& operator << (std::ostream& os, const Container<T1, T2>& con)\
+{\
+    os << "{";\
+    for(const auto& item : con)\
+        os << item << " ";\
+    os << "}";\
+    return os;\
+}
+
+ASSOCIATIVE_CONTAINER_OSTREAM_OPERATOR(std::map)
+ASSOCIATIVE_CONTAINER_OSTREAM_OPERATOR(std::multimap)
+ASSOCIATIVE_CONTAINER_OSTREAM_OPERATOR(std::unordered_map)
+ASSOCIATIVE_CONTAINER_OSTREAM_OPERATOR(std::unordered_multimap)
+
+SENQUENTIAL_CONTAINER_OSTREAM_OPERATOR(std::set)
+SENQUENTIAL_CONTAINER_OSTREAM_OPERATOR(std::multiset)
+SENQUENTIAL_CONTAINER_OSTREAM_OPERATOR(std::unordered_set)
+SENQUENTIAL_CONTAINER_OSTREAM_OPERATOR(std::unordered_multiset)
+
+SENQUENTIAL_CONTAINER_OSTREAM_OPERATOR(std::vector)
+
+SENQUENTIAL_CONTAINER_OSTREAM_OPERATOR(std::list)
+SENQUENTIAL_CONTAINER_OSTREAM_OPERATOR(std::forward_list)

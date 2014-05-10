@@ -1,5 +1,5 @@
-#ifndef WATER_TOOLS_SERIALIZE_STREAM_H
-#define WATER_TOOLS_SERIALIZE_STREAM_H
+#ifndef WATER_BASE_SERIALIZE_STREAM_H
+#define WATER_BASE_SERIALIZE_STREAM_H
 
 #include <type_traits>
 #include <cstring>
@@ -18,112 +18,123 @@
                      + __GNUC_MINOR__ * 100 \
                      + __GNUC_PATCHLEVEL__)
 
-class RawMemoryBuffer
+namespace buffer
 {
-public:
-    typedef uint32_t size_type;
-    typedef uint8_t value_type;
-/*
-    explicit RawMemoryBuffer(value_type* buf, size_type bufSize)
-    :m_rawBuffer(buf), m_bufSize(bufSize)
+    class RawBuffer
     {
-    }
-*/
-    RawMemoryBuffer() = default;
-    ~RawMemoryBuffer() = default;
+    public:
+        typedef uint32_t size_type;
+        typedef uint8_t value_type;
 
-    RawMemoryBuffer(const RawMemoryBuffer&) = delete;
-    RawMemoryBuffer& operator=(const RawMemoryBuffer&) = delete;
+        RawBuffer() = default;
+        ~RawBuffer() = default;
 
-    RawMemoryBuffer(RawMemoryBuffer&& other)
-    {
-        
-        m_bufSize = other.m_bufSize;
-        m_rawBuffer= other.m_rawBuffer;
+        RawBuffer(const RawBuffer&) = delete;
+        RawBuffer& operator=(const RawBuffer&) = delete;
 
-        other.clear();
-    }
+        RawBuffer(RawBuffer&& other)
+        {
+            m_bufSize = other.m_bufSize;
+            m_rawBuffer= other.m_rawBuffer;
 
-    inline size_type size() const
-    {
-        return m_size;
-    }
+            other.clear();
+        }
 
-    inline void clear()
-    {
-        m_size = 0;
-        m_bufSize = 0;
-    }
+        inline RawBuffer& operator=(RawBuffer&& other)
+        {
+            m_bufSize = other.m_bufSize;
+            m_rawBuffer= other.m_rawBuffer;
 
-    inline value_type* data() const
-    {
-        return m_rawBuffer;
-    }
+            other.clear();
 
-    inline value_type at(size_type pos) const
-    {
-        return m_rawBuffer[pos];
-    }
+            return *this;
+        }
 
-    inline value_type& at(size_type pos)
-    {
-        return m_rawBuffer[pos];
-    }
+        inline size_type size() const
+        {
+            return m_size;
+        }
 
-    inline void assign(value_type* buf, size_type bufSize)
-    {
-        m_rawBuffer = buf;
-        m_bufSize = bufSize;
-        m_size = 0;
-    }
+        inline void clear()
+        {
+            m_size = 0;
+            m_bufSize = 0;
+        }
 
-    inline void swap(RawMemoryBuffer& other)
-    {
-        size_type tempS = m_bufSize;
-        m_bufSize = other.m_bufSize;
-        other.m_bufSize = tempS;
+        inline value_type* data() const
+        {
+            return m_rawBuffer;
+        }
 
-        value_type* tempB = m_rawBuffer;
-        m_rawBuffer = other.m_rawBuffer;
-        other.m_rawBuffer = tempB;
-    }
+        inline value_type at(size_type pos) const
+        {
+            return m_rawBuffer[pos];
+        }
 
-    inline size_type copy(value_type* buf, size_type len, size_type pos = 0) const
-    {
-        if(m_size < pos)
-            return 0;
+        inline value_type& at(size_type pos)
+        {
+            return m_rawBuffer[pos];
+        }
 
-        size_type ret = m_size - pos < len ? m_size - pos : len;
-        ::memcpy(buf, m_rawBuffer + pos, ret);
-        return ret;
-    }
+        inline void assign(value_type* buf, size_type bufSize)
+        {
+            m_rawBuffer = buf;
+            m_bufSize = bufSize;
+            m_size = 0;
+        }
 
-    inline size_type append(const value_type* buf, size_type len)
-    {
-        size_type ret = m_bufSize - m_size < len ? m_size - m_bufSize : len;
-        ::memcpy(m_rawBuffer + m_size, buf, ret);
-        m_size += ret;
-        return ret;
-    }
+        inline void swap(RawBuffer& other)
+        {
+            size_type tempS = m_bufSize;
+            m_bufSize = other.m_bufSize;
+            other.m_bufSize = tempS;
 
-private:
-    size_type m_size = 0;
-    value_type* m_rawBuffer = nullptr;
-    size_type m_bufSize = 0;
-};
+            value_type* tempB = m_rawBuffer;
+            m_rawBuffer = other.m_rawBuffer;
+            other.m_rawBuffer = tempB;
+        }
 
+        inline size_type copy(value_type* buf, size_type len, size_type pos = 0) const
+        {
+            if(m_size < pos)
+                return 0;
 
-template<typename Buffer = std::basic_string<uint8_t>>
+            size_type ret = m_size - pos < len ? m_size - pos : len;
+            ::memcpy(buf, m_rawBuffer + pos, ret);
+            return ret;
+        }
+
+        inline size_type append(const value_type* buf, size_type len)
+        {
+            size_type ret = m_bufSize - m_size < len ? m_size - m_bufSize : len;
+            ::memcpy(m_rawBuffer + m_size, buf, ret);
+            m_size += ret;
+            return ret;
+        }
+
+    private:
+        size_type m_size = 0;
+        value_type* m_rawBuffer = nullptr;
+        size_type m_bufSize = 0;
+    };
+}
+
+template<typename Buffer>
 class SerializeStream
 {
 public:
-
     typedef typename Buffer::size_type size_type;
 
     SerializeStream() = default;
     ~SerializeStream() = default;
 
     SerializeStream(SerializeStream&& other)
+    {
+        clear();
+        buffer.swap(other.buffer);
+    }
+
+    SerializeStream& operator = (SerializeStream&& other)
     {
         clear();
         buffer.swap(other.buffer);
@@ -136,7 +147,7 @@ public:
         buffer.assign(p, bufSize);
     }
 
-    uint32_t copy(void* buf, uint32_t bufSize)
+    size_type copy(void* buf, uint32_t bufSize)
     {
         return buffer.copy(buf, bufSize);
     }
@@ -405,7 +416,6 @@ public:
     template <typename T>
     SerializeStream& operator >> (T& t)
     {
-//#if GCC_VERSION > 
         deserialize(t, std::integral_constant<bool, std::is_trivial<T>::value>());//std::is_trivially_copyable<T>);
         return *this;
     }
@@ -419,9 +429,9 @@ private:
         opos += sizeof(t);
     }
 
-    //serialize non - trivial type
+    //serialize non-trivial type
     template <typename TrivialType>
-    void serialize(const TrivialType&, std::false_type);
+    void serialize(const TrivialType&, std::false_type) = delete;
 
     //deserializeContainer trivial type
     template <typename TrivialType>
@@ -437,7 +447,7 @@ private:
 
     //deserializeContainer non-trivial type
     template <typename TrivialType>
-    void deserialize(const TrivialType&, std::false_type);
+    void deserialize(const TrivialType&, std::false_type) = delete;
 
     //serialize container
     template <typename ContainerT>
@@ -484,5 +494,8 @@ private:
     size_type ipos = 0;
     size_type opos = 0;
 };
+
+typedef SerializeStream<std::basic_string<uint8_t>> SerializeStreamSafe;
+typedef SerializeStream<buffer::RawBuffer> SerializeStreamRaw;
 
 #endif

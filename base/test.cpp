@@ -7,10 +7,24 @@ using namespace std;
                      + __GNUC_MINOR__ * 100 \
                      + __GNUC_PATCHLEVEL__)
 
+struct S
+{
+    S()
+    {
+        memset(this, 0, sizeof(*this));
+    }
+    int i;
+};
+
+std::ostream& operator << (std::ostream& os, const S& s)
+{
+    os << s.i;
+    return os;
+}
 
 int main()
 {
-    SerializeStream<RawMemoryBuffer> ss;
+    SerializeStream<buffer::RawBuffer> ss;
     uint8_t buffer[1024] = {0};
 
     ss.assign(buffer, 1024);
@@ -18,48 +32,47 @@ int main()
     typedef std::string  TA;
     TA a1{"1234"};
     ss << a1;
-    print(a1);
+    cout << (a1);
     cout << endl;
 
     TA a2;
     ss >> a2;
-    print(a2);
+    cout << (a2);
     cout << endl;
 
     typedef std::vector<int> TB;
     TB b1{1, 2, 3, 4, 5};
     ss << b1;
-    print(b1);
+    cout << (b1);
     cout << endl;
 
     TB b2;
     ss >> b2;
-    print(b2);
+    cout << (b2);
     cout << endl;
-
 
 
     typedef std::vector<std::set<std::string>> TC;
     TC c1{{"a", "b"}, {"c", "d"}};
     ss << c1;
-    print(c1);
+    cout << (c1);
     cout << endl;
 
     TC c2;
     ss >> c2;
-    print(c2);
+    cout << (c2);
     cout << endl;
 
 
     typedef std::vector<std::vector<int>> TD;
     TD d1{{1, 2}, {3, 4}};
     ss << d1;
-    print(d1);
+    cout << (d1);
     cout << endl;
 
     TD d2;
     ss >> d2;
-    print(d2);
+    cout << (d2);
     cout << endl;
 
     typedef std::vector<std::pair<std::set<int>, std::string>> TE;
@@ -69,23 +82,35 @@ int main()
         {{3, 4}, "34"}
     };
     ss << e1;
-    print(e1);
+    cout << (e1);
     cout << endl;
 
     TE e2;
     ss >> e2;
-    print(e2);
+    cout << (e2);
     cout << endl;
 
     typedef std::list<std::list<int>> TF;
     TF f1{{1,2,3}, {4,5,6}};
     ss << f1;
-    print(f1);
+    cout << (f1);
     cout << endl;
     
     TF f2;
     ss >> f2;
-    print(f2);
+    cout << (f2);
+    cout << endl;
+
+
+    typedef std::vector<S> TG;
+    TG g1{1};
+    ss << g1;
+    cout << g1;
+    cout << endl;
+
+    TG g2;
+    ss >> g2;
+    cout << (g2);
     cout << endl;
 
     return 0;

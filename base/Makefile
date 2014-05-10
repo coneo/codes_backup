@@ -4,8 +4,8 @@ objects = \
     exception.o\
     scope_guard.o\
 
-CC = g++4.7
-cc = g++4.7
+CC = g++-4.7.3
+cc = g++-4.7.3
 
 CXX_FLAGS = -std=c++11 -g
 
