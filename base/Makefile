@@ -7,31 +7,32 @@ objects = \
 CC = g++-4.7.3
 cc = g++-4.7.3
 
-CXX_FLAGS = -std=c++11 -g
+cc_flags = -std=c++11 -g
 
-link_name=base
-target = lib$(link_name).a
+target = libbase.a
 test_target = test
 
 .PHONY:
 all: $(target)
 
+.PHONY:
+t : $(test_target)
+
 $(test_target): $(target) test.cpp
-	$(cc) $(CXX_FLAGS) -o $(test_target) test.cpp -L. -lbase
+	$(cc) $(cc_flags) -o $(test_target) test.cpp -L. -lbase
 
 
 $(target) : $(objects)
-	ar r $(target) $(objects)
-	ranlib $(target)
+	ar rs $(target) $(objects)
 
 
 %.o: %.cpp
-	$(cc) $(CXX_FLAGS) -c $< -o $@
+	$(cc) $(cc_flags) -c $< -o $@
 
 %.d: %.cpp
 	@set -e -x; \
 	rm -f $@; \
-	$(cc) $(CXX_FLAGS) -MM $< > $@.$$$$;  \
+	$(cc) $(cc_flags) -MM $< > $@.$$$$;  \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@;  \
 	rm -f $@.$$$$
 

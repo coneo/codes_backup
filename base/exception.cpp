@@ -15,8 +15,8 @@ ExceptionBase::ExceptionBase(const std::string& msg,
                              const std::string& file, 
                              const std::string& func, 
                              int32_t line,
-                             int32_t linuxErrno) noexcept
-: m_msg(msg), m_file(file), m_func(func), m_line(line), m_linuxErrno(linuxErrno)
+                             int32_t sysErrno) noexcept
+: m_msg(msg), m_file(file), m_func(func), m_line(line), m_sysErrno(sysErrno)
 {
 }
 

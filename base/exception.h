@@ -1,5 +1,5 @@
-#ifndef WATER_EXCEPTION_HPP
-#define WATER_EXCEPTION_HPP
+#ifndef WATER_BASE_EXCEPTION_HPP
+#define WATER_BASE_EXCEPTION_HPP
 
 #include <exception>
 #include <string>
@@ -13,8 +13,8 @@ public:\
             const std::string& file = "<unknown file>", \
             const std::string& func = "<unknown func>", \
             int32_t line = 0,\
-            int32_t linuxErrno = 0) noexcept\
-    : Base(msg, file, func, line, linuxErrno)\
+            int32_t sysErrno = 0) noexcept\
+    : Base(msg, file, func, line, sysErrno)\
     {\
     }\
     ~ExceptionClass() noexcept {}\
@@ -38,7 +38,7 @@ public:
                   const std::string& file = "<unknown file>", 
                   const std::string& func = "<unknown func>", 
                   int32_t line = 0,
-                  int32_t linuxErrno = 0) noexcept;
+                  int32_t sysErrno = 0) noexcept;
     virtual ~ExceptionBase() noexcept;
 
 
@@ -50,7 +50,7 @@ protected:
     const std::string m_file;
     const std::string m_func;
     const int32_t m_line;
-    const int32_t m_linuxErrno;
+    const int32_t m_sysErrno;
     mutable std::string m_what;
 };
 

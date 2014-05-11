@@ -1,7 +1,11 @@
+#include "listener.h"
+#include "connector.h"
+#include "connection.h"
+#include "net_exception.h"
+
 #include <iostream>
 #include <string>
 #include <memory>
-#include "net.h"
 
 #include <unistd.h> //sleep
 
@@ -19,15 +23,15 @@ int main()
         cout << "server is running ..." << endl;
         
         auto connection = listener->accept();
-        cout << "accept a client:" << connection->getRemoteEndPoint().ip
-        << "[" << connection->getRemoteEndPoint().port << "]" << endl;
+        cout << "accept a client:" << connection->getRemoteEndpoint().ip
+        << "[" << connection->getRemoteEndpoint().port << "]" << endl;
 
         ::sleep(30);
         connection->shutdown();
     }
-    catch(net::NetException::Ptr ex)
+    catch(net::NetException& ex)
     {
-        cerr << ex->errInfo() << endl;
+        cerr << ex.what() << endl;
     }
     catch(...)
     {
@@ -47,13 +51,13 @@ int main()
         auto connector = net::TcpConnector::create("127.0.0.1", 1024);
         cout << "connect to server ..." << endl;
         auto connection = connector->connect();
-        cout << "connected to server:" << connection->getRemoteEndPoint().ip << "[" << connection->getRemoteEndPoint().port << "]" << endl;
+        cout << "connected to server:" << connection->getRemoteEndpoint().ip << "[" << connection->getRemoteEndpoint().port << "]" << endl;
         ::sleep(30);
         connection->shutdown();
     }
-    catch(net::NetException::Ptr ex)
+    catch(net::NetException& ex)
     {
-        cerr << ex->errInfo() << endl;
+        cerr << ex.what() << endl;
     }
     catch(...)
     {

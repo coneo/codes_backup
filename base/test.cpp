@@ -1,17 +1,29 @@
 #include "../test/test.h"
 #include "serialize_stream.h"
+#include "scope_guard.h"
+#include "event.h"
 
 using namespace std;
 
 #define GCC_VERSION (__GNUC__ * 10000 \
                      + __GNUC_MINOR__ * 100 \
                      + __GNUC_PATCHLEVEL__)
-
+using namespace water;
 struct S
 {
     S()
     {
         memset(this, 0, sizeof(*this));
+    }
+
+    void set(int a)
+    {
+        i = a;
+    }
+
+    void print() const
+    {
+        cout << i << endl;
     }
     int i;
 };
@@ -22,7 +34,36 @@ std::ostream& operator << (std::ostream& os, const S& s)
     return os;
 }
 
+
+void eventTest1(S& s, int value)
+{
+    Event<void(S::*)(int)> event1;
+    Event<void (S::*)(int)>::Handler handler1 = std::mem_fun(&S::set);
+
+    Event<void(S::*)()> event2;
+    Event<void (S::*)()>::Handler handler2 = std::mem_fun(&S::print);
+    event1.reg(handler1);
+    event2.reg(handler2);
+    event1(&s, value);
+    event2(&s);
+}
+
+void eventTest2()
+{
+    S s;
+    Event<void(S&, int)> event;
+    event.reg(eventTest1);
+    event(s, 5);
+}
+
 int main()
+{
+    eventTest2();
+    return 0;
+}
+
+/*
+void serializeTest()
 {
     SerializeStream<buffer::RawBuffer> ss;
     uint8_t buffer[1024] = {0};
@@ -112,7 +153,5 @@ int main()
     ss >> g2;
     cout << (g2);
     cout << endl;
-
-    return 0;
 }
-
+*/

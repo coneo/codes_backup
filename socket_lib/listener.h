@@ -4,25 +4,27 @@
 #include "socket.h"
 #include "connection.h"
 
-namespace net
+namespace water{
+namespace net{
+
+
+class TcpListener : public TcpSocket
 {
+public:
+    TYPEDEF_PTR(TcpListener);
+public:
+    CREATE_FUN_MAKE(TcpListener);
+    explicit TcpListener();
 
-    class TcpListener : public TcpSocket
-    {
-    public:
-        TYPEDEF_PTR(TcpListener);
-    public:
-        CREATE_FUN_MAKE(TcpListener);
-        explicit TcpListener();
+public:
+    ~TcpListener();
 
-    public:
-        ~TcpListener();
+    void listen(int32_t backlog = 20);
+    TcpConnection::Ptr accept();
 
-        void listen(int32_t backlog = 20);
-        TcpConnection::Ptr accept();
+private:
+};
 
-    private:
-    };
 
-}
+}}
 #endif //#ifndef WATER_NET_LISTENER_HPP
