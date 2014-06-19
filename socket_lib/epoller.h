@@ -22,8 +22,8 @@ public:
     Epoller();
     ~Epoller();
 
-    void regSocket(Socket* socket, EventHanlder hanlder, EventType et);
-    void unregSocket(Socket* socket, EventHanlder hanlder, EventType et);
+    void regSocket(Socket* socket, EventType et, EventHanlder hanlder);
+    void unregSocket(Socket* socket, EventType et);
     void wait(int32_t timeout);
 
 private:

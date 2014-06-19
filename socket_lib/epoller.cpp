@@ -6,11 +6,7 @@
 #include "net_exception.h"
 
 Epoller::Epoller()
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,27)
-    :m_epollfd(::epoll_create(10))
-#else
-    :m_epollfd(::epoll_create1(0))
-#endif
+: m_epollfd(::epoll_create(10))
 {
     if(m_epollfd == -1)
         SYS_EXCEPTION(NetException, "::epoll_create");
@@ -20,7 +16,7 @@ Epoller::~Epoller()
 {
 }
 
-bool Epoller::regSocket(Socket* socket, EventHanlder handler, EventType et)
+void Epoller::regSocket(Socket* socket, EventType et, EventHanlder handler)
 {
     if(socket == nullptr)
         return;
@@ -46,17 +42,28 @@ bool Epoller::regSocket(Socket* socket, EventHanlder handler, EventType et)
     }
 }
 
-void EventHanlder::unregSocket(Socket* socket, EventHanlder handler, EventHanlder et)
+void EventHanlder::unregSocket(Socket* socket, EventHanlder et)
 {
     if(socket == nullptr)
         return;
 
+    struct epoll_event ev;
+    ev.data.ptr = socket;
+
     if(et == EventType::READ)
     {
+        ev.events = EPOLLIN;
+        if(::epoll_ctl(m_epollfd, EPOLL_CTL_DEL, socket->getFD(), %ev) == -1)
+            SYS_EXCEPTION(NetException, "::epoll_ctl");
+
         m_readEventHandlers.erase(socket);
     }
     else// if(et == EventType::WRITE)
     {
+        ev.events = EPOLLOUT;
+        if(::epoll_ctl(m_epollfd, EPOLL_CTL_DEL, socket->getFD(), %ev) == -1)
+            SYS_EXCEPTION(NetException, "::epoll_ctl");
+
         m_writeEventHandlers.erase(socket);
     }
 }
@@ -65,6 +72,25 @@ void EventHanlder::wait(int32_t timeout)
 {
     if(socket == nullptr)
         return;
+
+    const uint32_t maxevents = 100;
+    struct epoll_event events[maxevents];
+
+    const int32_t eventSize = ::epoll_wait(m_epollfd, &events, maxevents, timeout);
+    if(eventSize == -1)
+        SYS_EXCEPTION(NetException, "::epoll_wait");
+
+    for(int32_t i = 0; i < eventSize; ++i)
+    {
+        if(events[i].events & EPOLL_OUT)
+        {
+            a
+        }
+        else //if(events[i].events & EPOLL_IN)
+        {
+            a
+        }
+    }
 
     for(;;) 
     {
