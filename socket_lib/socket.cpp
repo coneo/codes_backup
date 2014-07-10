@@ -11,15 +11,15 @@
 namespace water{
 namespace net{
 TcpSocket::TcpSocket()
-: m_fd(::socket(PF_INET, SOCK_STREAM, 0)), m_blockingStatus(BlockingStatus::BLOCKING)
+: m_fd(::socket(PF_INET, SOCK_STREAM, 0))
 {
     if(m_fd == -1)
         SYS_EXCEPTION(NetException, "::socket");
 
 }
 
-TcpSocket::TcpSocket(int32_t fd, BlockingStatus blockingStatus)
-: m_fd(fd), m_blockingStatus(blockingStatus)
+TcpSocket::TcpSocket(int32_t fd)
+: m_fd(fd)
 {
 }
 
@@ -34,18 +34,15 @@ TcpSocket::~TcpSocket()
     }
 }
 
-
 void TcpSocket::close()
 {
     if(!isAvaliable())
         return;
 
     ::close(m_fd);
-    onClosed();
+    onClosed(this);
     m_fd = -1;
 }
-
-
 
 int32_t TcpSocket::getFD() const
 {
@@ -57,14 +54,9 @@ bool TcpSocket::isAvaliable() const
     return m_fd != -1;
 }
 
-void TcpSocket::disableAutoClose()
-{
-    m_autoClose = false;
-}
-
 bool TcpSocket::isNonBlocking() const
 {
-    return m_blockingStatus == BlockingStatus::NON_BLOCKING;
+    return TcpSocket::isNonBlockingFD(m_fd);
 }
 
 void TcpSocket::setNonBlocking()
@@ -77,8 +69,6 @@ void TcpSocket::setNonBlocking()
         SYS_EXCEPTION(NetException, "::fcntl");
     if(-1 == ::fcntl(m_fd, F_SETFL, flags | O_NONBLOCK))
         SYS_EXCEPTION(NetException, "::fcntl");
-
-    m_blockingStatus = BlockingStatus::NON_BLOCKING;
 }
 
 void TcpSocket::bind(uint16_t port)
@@ -116,4 +106,14 @@ void TcpSocket::bind(const Endpoint& endpoint)
         SYS_EXCEPTION(NetException, "::bind");
 }
 
+bool TcpSocket::isNonBlockingFD(int32_t fd)
+{
+    int32_t flags = ::fcntl(fd, F_GETFL, 0);
+    if(-1 == flags)
+        SYS_EXCEPTION(NetException, "::fcntl");
+
+    return (flags & O_NONBLOCK) > 0;
+}
+
 }}
+

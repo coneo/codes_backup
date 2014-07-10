@@ -12,8 +12,8 @@ TcpConnection::TcpConnection(const Endpoint& remoteEndpoint)
 {
 }
 
-TcpConnection::TcpConnection(int32_t socketFD, BlockingStatus blockingStatus, const Endpoint& remoteEndpoint)
-: TcpSocket(socketFD, blockingStatus), m_remoteEndpoint(remoteEndpoint), m_state(ConnState::READ_AND_WRITE)
+TcpConnection::TcpConnection(int32_t socketFD, const Endpoint& remoteEndpoint)
+: TcpSocket(socketFD), m_remoteEndpoint(remoteEndpoint), m_state(ConnState::READ_AND_WRITE)
 {
 }
 
@@ -36,12 +36,28 @@ const Endpoint& TcpConnection::getRemoteEndpoint() const
 
 uint32_t TcpConnection::send(uint8_t* buf, int32_t bufLen)
 {
-    return 0;
+    uint32_t sendLen = ::send(getFD(), buf, bufLen, MSG_NOSIGNAL);
+    if(sendLen == static_cast<uint32_t>(-1))
+    {
+        if(errno == EAGAIN || errno == EWOULDBLOCK)
+            return static_cast<uint32_t>(-1);
+
+        SYS_EXCEPTION(NetException, "::send");
+    }
+
+    return sendLen;
 }
 
 uint32_t TcpConnection::recv(uint8_t* buf, int32_t bufLen)
 {
-    return 0;
+    uint32_t recvLen = ::recv(getFD(), buf, bufLen, 0);
+    if(recvLen == static_cast<uint32_t>(-1))
+    {
+        if(errno == EAGAIN || errno == EWOULDBLOCK)
+            return 0;
+        SYS_EXCEPTION(NetException, "::recv");
+    }
+    return recvLen;
 }
 
 void TcpConnection::shutdown(ConnState state)
@@ -69,12 +85,6 @@ void TcpConnection::shutdown(ConnState state)
 
     if(m_state == ConnState::CLOSED)
         close();
-}
-
-void TcpConnection::close()
-{
-    shutdown(ConnState::READ_AND_WRITE);
-    TcpSocket::close();
 }
 
 TcpConnection::ConnState TcpConnection::getState() const

@@ -16,7 +16,7 @@ public:
 private:
     CREATE_FUN_NEW(TcpConnection)
     explicit TcpConnection(const Endpoint& remoteEndpoint);
-    explicit TcpConnection(int32_t socketFD, BlockingStatus blockingStatus, const Endpoint& remoteEndpoint);
+    explicit TcpConnection(int32_t socketFD, const Endpoint& remoteEndpoint);
 
 public:
     ~TcpConnection();
@@ -32,11 +32,11 @@ public:
 
     const Endpoint& getRemoteEndpoint() const;
 
+    //send返回-1时，表示非阻塞的socket在发送时放弃等待返回
     uint32_t send(uint8_t* buf, int bufLen);
     uint32_t recv(uint8_t* buf, int bufLen);
 
     void shutdown(ConnState state = ConnState::READ_AND_WRITE);
-    void close() override;
 
     ConnState getState() const;
 

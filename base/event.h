@@ -1,5 +1,5 @@
-#ifndef WATER_NET_EVENT_HPP
-#define WATER_NET_EVENT_HPP
+#ifndef WATER_EVENT_HPP
+#define WATER_EVENT_HPP
 
 #include <functional>
 #include <memory>

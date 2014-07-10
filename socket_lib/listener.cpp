@@ -32,17 +32,20 @@ TcpConnection::Ptr TcpListener::accept()
 
     int32_t fd = ::accept(getFD(), (struct sockaddr*)&clientAddrIn, &clientAddrInSize);
     if(-1 == fd)
+    {
+        if(errno == EAGAIN || errno == EWOULDBLOCK)
+            return nullptr;
+
         SYS_EXCEPTION(NetException, "::accept");
+    }
 
     Endpoint remoteEndpoint;
     remoteEndpoint.ip.value = clientAddrIn.sin_addr.s_addr;     //远端ip
     remoteEndpoint.port     = ::ntohs(clientAddrIn.sin_port);   //远端port
 
-    TcpConnection::Ptr ret = TcpConnection::create(fd, BlockingStatus::BLOCKING, remoteEndpoint);
+    TcpConnection::Ptr ret = TcpConnection::create(fd, remoteEndpoint);
     return ret;
 }
-
-
 
 }}
 

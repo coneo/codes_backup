@@ -13,8 +13,7 @@ namespace net{
 class Epoller
 {
 public:
-    enum class EventType { READ, WRITE };
-    typedef std::function<void (Socket*)> EventHanlder;
+    enum class EventType : int32_t { ERROR = 0, READ = 1, WRITE = 2 };
 
     TYPEDEF_PTR(Epoller)
     CREATE_FUN_MAKE(Epoller)
@@ -22,15 +21,13 @@ public:
     Epoller();
     ~Epoller();
 
-    void regSocket(Socket* socket, EventType et, EventHanlder hanlder);
-    void unregSocket(Socket* socket, EventType et);
+    void regSocket(TcpSocket* socket, EventType et);
+    void delSocket(TcpSocket* socket);
+
     void wait(int32_t timeout);
 
 private:
     int32_t m_epollfd = -1;
-
-    std::unordered_map<Socket*, EventHanlder> m_readEventHandlers;
-    std::unordered_map<Socket*, EventHanlder> m_writeEventHandlers;
 };
 
 }}

@@ -2,12 +2,14 @@
 #define WATER_NET_SOCKET_HPP
 
 #include "../base/component.h"
+#include "../base/event.h"
 #include "endpoint.h"
 namespace water{
 namespace net{
 
 class TcpSocket
 {
+    friend class Epoller;
 public:
     enum class BlockingStatus {BLOCKING, NON_BLOCKING };
 
@@ -15,7 +17,7 @@ public:
     TYPEDEF_PTR(TcpSocket)
 protected:
     explicit TcpSocket();
-    explicit TcpSocket(int32_t fd, BlockingStatus blockingStatus);
+    explicit TcpSocket(int32_t fd);
 
 public:
     virtual ~TcpSocket();
@@ -37,16 +39,29 @@ public:
     bool isAvaliable() const;
 
     void close();
-    void disableAutoClose();
 
 public:
     typedef Event<void (TcpSocket*)> OnClosedEvent;
     OnClosedEvent onClosed;
 
+public:
+    typedef std::function<void (TcpSocket*)> EpollCallback;
+
+    void setEpollReadCallback(EpollCallback cb);
+    void setEpollWriteCallback(EpollCallback cb);
+    void setEpollErrorCallback(EpollCallback cb);
+
+private:
+    EpollCallback m_epollReadCallback;
+    EpollCallback m_epollWriteCallback;
+    EpollCallback m_epollErrorCallback;
+
 private:
     int32_t m_fd;
-    BlockingStatus m_blockingStatus;
     bool m_autoClose;
+
+public:
+    static bool isNonBlockingFD(int32_t fd);
 };
 
 }}

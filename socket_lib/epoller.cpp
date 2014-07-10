@@ -5,6 +5,9 @@
 
 #include "net_exception.h"
 
+namespace water{
+namespace net{
+
 Epoller::Epoller()
 : m_epollfd(::epoll_create(10))
 {
@@ -16,111 +19,70 @@ Epoller::~Epoller()
 {
 }
 
-void Epoller::regSocket(Socket* socket, EventType et, EventHanlder handler)
+void Epoller::regSocket(TcpSocket* socket, EventType et)
 {
-    if(socket == nullptr)
-        return;
-
     struct epoll_event ev;
     ev.data.ptr = socket;
 
     if(et == EventType::READ)
     {
         ev.events = EPOLLIN;
-        if(::epoll_ctl(m_epollfd, EPOLL_CTL_ADD, socket->getFD(), &ev) == -1)
-            SYS_EXCEPTION(NetException, "::epoll_ctl");
-
-        m_readEventHandlers[socket] = handler;
     }
-    else// if(et == EventType::WRITE)
+    else if(et == EventType::WRITE)
     {
         ev.events = EPOLLOUT;
-        if(::epoll_ctl(m_epollfd, EPOLL_CTL_ADD, socket->getFD(), &ev) == -1)
-            SYS_EXCEPTION(NetException, "::epoll_ctl");
+    }
+    else
+    {
+        return;
+    }
 
-        m_writeEventHandlers[socket] = handler;
+    if(::epoll_ctl(m_epollfd, EPOLL_CTL_ADD, socket->getFD(), &ev) == -1)
+    {
+        if(errno != EEXIST)
+            SYS_EXCEPTION(NetException, "::epoll_ctl, EPOLL_CTL_ADD");
+
+        if(::epoll_ctl(m_epollfd, EPOLL_CTL_MOD, socket->getFD(), &ev) == -1)
+            SYS_EXCEPTION(NetException, "::epoll_ctl, EPOLL_CTL_MOD");
     }
 }
 
-void EventHanlder::unregSocket(Socket* socket, EventHanlder et)
+void Epoller::delSocket(TcpSocket* socket)
 {
-    if(socket == nullptr)
-        return;
-
-    struct epoll_event ev;
-    ev.data.ptr = socket;
-
-    if(et == EventType::READ)
+    if(::epoll_ctl(m_epollfd, EPOLL_CTL_DEL, socket->getFD(), nullptr) == -1)
     {
-        ev.events = EPOLLIN;
-        if(::epoll_ctl(m_epollfd, EPOLL_CTL_DEL, socket->getFD(), %ev) == -1)
-            SYS_EXCEPTION(NetException, "::epoll_ctl");
+        if(errno == ENOENT) //删除时已经不存在了，不视为错误
+            return;
 
-        m_readEventHandlers.erase(socket);
-    }
-    else// if(et == EventType::WRITE)
-    {
-        ev.events = EPOLLOUT;
-        if(::epoll_ctl(m_epollfd, EPOLL_CTL_DEL, socket->getFD(), %ev) == -1)
-            SYS_EXCEPTION(NetException, "::epoll_ctl");
-
-        m_writeEventHandlers.erase(socket);
+        SYS_EXCEPTION(NetException, "::epoll_ctl, EPOLL_CTL_DEL");
     }
 }
 
-void EventHanlder::wait(int32_t timeout)
+void Epoller::wait(int32_t timeout)
 {
-    if(socket == nullptr)
-        return;
-
     const uint32_t maxevents = 100;
     struct epoll_event events[maxevents];
 
-    const int32_t eventSize = ::epoll_wait(m_epollfd, &events, maxevents, timeout);
+    const int32_t eventSize = ::epoll_wait(m_epollfd, events, maxevents, timeout);
     if(eventSize == -1)
         SYS_EXCEPTION(NetException, "::epoll_wait");
 
     for(int32_t i = 0; i < eventSize; ++i)
     {
-        if(events[i].events & EPOLL_OUT)
+        TcpSocket* socket = reinterpret_cast<TcpSocket*>(events[i].data.ptr);
+        if(events[i].events & EPOLLIN)
         {
-            a
+            socket->m_epollReadCallback(socket);
         }
-        else //if(events[i].events & EPOLL_IN)
+        else if(events[i].events & EPOLLOUT)
         {
-            a
+            socket->m_epollWriteCallback(socket);
         }
-    }
-
-    for(;;) 
-    {
-        nfds = epoll_wait(m_epollfd, events, maxevents, -1);
-
-        for(n = 0; n < nfds; ++n) 
+        else// if( (events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP) )
         {
-            if(events[n].data.fd == listener) 
-            {
-                client = accept(listener, (struct sockaddr *) &local,
-                                &addrlen);
-                if(client < 0){
-                    perror("accept");
-                    continue;
-                }
-                setnonblocking(client);
-                ev.events = EPOLLIN | EPOLLET;
-                ev.data.fd = client;
-                if (epoll_ctl(m_epollfd, EPOLL_CTL_ADD, client, &ev) < 0) 
-                {
-                    fprintf(stderr, "epoll set insertion error: fd=%d\n",
-                            client);
-                    return -1;
-                }
-            }
-            else
-            {
-                do_use_fd(events[n].data.fd);
-            }
+            socket->m_epollErrorCallback(socket);
         }
     }
 }
 
+}}

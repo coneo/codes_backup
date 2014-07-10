@@ -3,11 +3,10 @@
 
 #include "../base/exception.h"
 
-
-namespace net
-{
+namespace water{
+namespace net{
 
     DEFINE_EXCEPTION(NetException, ExceptionBase)
 
-}
+}}
 #endif

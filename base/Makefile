@@ -3,28 +3,31 @@ objects = \
     tools.o\
     exception.o\
     scope_guard.o\
+    datetime.o\
 
 CC = g++-4.7.3
-cc = g++-4.7.3
+cc = g++4.7
 
-cc_flags = -std=c++11 -g
+cc_flags = -std=c++11 -fPIC -g
 
-target = libbase.a
+target = libbase
 test_target = test
 
 .PHONY:
-all: $(target)
+all: $(target).a $(target).so
 
 .PHONY:
 t : $(test_target)
 
-$(test_target): $(target) test.cpp
-	$(cc) $(cc_flags) -o $(test_target) test.cpp -L. -lbase
+$(test_target) : $(target).so test.cpp
+	$(cc) $(cc_flags) -o $(test_target) test.cpp -L. -lbase -lrt -Wl,-rpath,.
 
 
-$(target) : $(objects)
+$(target).a : $(objects)
 	ar rs $(target) $(objects)
 
+$(target).so : $(objects)
+	$(cc) -shared $(objects) -o $(target).so
 
 %.o: %.cpp
 	$(cc) $(cc_flags) -c $< -o $@
@@ -40,7 +43,7 @@ $(target) : $(objects)
 
 .PHONY: clean
 clean:
-	-rm -f *.o *.d *.d.* $(target)
+	-rm -f *.o *.d *.d.* $(target).o $(target).so
 
 .PHONY: clean_test
 clean_test:
