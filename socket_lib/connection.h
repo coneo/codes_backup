@@ -32,9 +32,9 @@ public:
 
     const Endpoint& getRemoteEndpoint() const;
 
-    //send返回-1时，表示非阻塞的socket在发送时放弃等待返回
-    uint32_t send(uint8_t* buf, int bufLen);
-    uint32_t recv(uint8_t* buf, int bufLen);
+    //返回-1时, 表示noblocking的socket, 返回EAGAIN或EWOULDBLOCK
+    uint32_t send(const void* buf, int bufLen);
+    uint32_t recv(void* buf, int bufLen);
 
     void shutdown(ConnState state = ConnState::READ_AND_WRITE);
 

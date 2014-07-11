@@ -34,13 +34,13 @@ const Endpoint& TcpConnection::getRemoteEndpoint() const
     return m_remoteEndpoint;
 }
 
-uint32_t TcpConnection::send(uint8_t* buf, int32_t bufLen)
+uint32_t TcpConnection::send(const void* buf, int32_t bufLen)
 {
     uint32_t sendLen = ::send(getFD(), buf, bufLen, MSG_NOSIGNAL);
     if(sendLen == static_cast<uint32_t>(-1))
     {
         if(errno == EAGAIN || errno == EWOULDBLOCK)
-            return static_cast<uint32_t>(-1);
+            return uint32_t(-1);
 
         SYS_EXCEPTION(NetException, "::send");
     }
@@ -48,13 +48,13 @@ uint32_t TcpConnection::send(uint8_t* buf, int32_t bufLen)
     return sendLen;
 }
 
-uint32_t TcpConnection::recv(uint8_t* buf, int32_t bufLen)
+uint32_t TcpConnection::recv(void* buf, int32_t bufLen)
 {
     uint32_t recvLen = ::recv(getFD(), buf, bufLen, 0);
     if(recvLen == static_cast<uint32_t>(-1))
     {
         if(errno == EAGAIN || errno == EWOULDBLOCK)
-            return 0;
+            return uint32_t(-1);
         SYS_EXCEPTION(NetException, "::recv");
     }
     return recvLen;

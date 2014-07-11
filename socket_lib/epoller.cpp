@@ -74,11 +74,11 @@ void Epoller::wait(int32_t timeout)
         {
             socket->m_epollReadCallback(socket);
         }
-        else if(events[i].events & EPOLLOUT)
+        if(events[i].events & EPOLLOUT)
         {
             socket->m_epollWriteCallback(socket);
         }
-        else// if( (events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP) )
+        if( (events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP) )
         {
             socket->m_epollErrorCallback(socket);
         }

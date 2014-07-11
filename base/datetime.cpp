@@ -93,7 +93,7 @@ std::string TimePoint::toString() const
     if(bufOffset == 0)
         return "";
 
-    snprintf(buf + bufOffset, sizeof(buf) - bufOffset, ".GMT%+0.5d", m_offset);
+    snprintf(buf + bufOffset, sizeof(buf) - bufOffset, ".%+0.5d", m_offset);
     return buf;
 }
 
@@ -111,7 +111,7 @@ void TimePoint::fromString(const std::string& timeStr)
         return;
     }
 
-    const int32_t timezonePrefixSize = sizeof(".UTC") - 1;
+    const int32_t timezonePrefixSize = sizeof(".") - 1;
     sscanf(timezoneStr + timezonePrefixSize, "%d", &m_offset);
 
     tm t = *m_localtm;
@@ -132,7 +132,7 @@ TimePoint TimePoint::now(int32_t offset)
 
 }
 
-#ifdef UNINT_TEST
+#ifdef UNIT_TEST
 
 #include <time.h>
 #include <iostream>

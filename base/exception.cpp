@@ -35,7 +35,7 @@ const char* ExceptionBase::what() const noexcept
         return m_what.c_str();
     
     stringstream ss;
-    ss << m_file << "[" << m_line << "]:" << exceptionName() << "," << m_msg;
+    ss << m_file << "+" << m_line << "," << exceptionName() << "," << errno << "{" << m_msg << "}";
     m_what = ss.str();
    
     return m_what.c_str();

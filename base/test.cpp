@@ -1,7 +1,9 @@
+
 #include "../test/test.h"
 #include "serialize_stream.h"
 #include "scope_guard.h"
 #include "event.h"
+#include "exception.h"
 
 using namespace std;
 
@@ -11,9 +13,10 @@ using namespace std;
 using namespace water;
 struct S
 {
-    S()
+    S(int i_ = 0)
     {
         memset(this, 0, sizeof(*this));
+        i = i_;
     }
 
     void set(int a)
@@ -33,6 +36,19 @@ std::ostream& operator << (std::ostream& os, const S& s)
     os << s.i;
     return os;
 }
+
+SerializeStream<buffer::RawBuffer>& operator << (SerializeStream<buffer::RawBuffer>& ss, const S& s)
+{
+    ss << s.i;
+    return ss;
+}
+
+SerializeStream<buffer::RawBuffer>& operator >> (SerializeStream<buffer::RawBuffer>& ss, S& s)
+{
+    ss >> s.i;
+    return ss;
+}
+
 
 
 void eventTest1(S& s, int value)
@@ -56,19 +72,12 @@ void eventTest2()
     event(s, 5);
 }
 
-int main()
-{
-    eventTest2();
-    return 0;
-}
-
-/*
 void serializeTest()
 {
     SerializeStream<buffer::RawBuffer> ss;
     uint8_t buffer[1024] = {0};
 
-    ss.assign(buffer, 1024);
+    ss.assignOutBuffer(buffer, 1024);
 
     typedef std::string  TA;
     TA a1{"1234"};
@@ -136,7 +145,7 @@ void serializeTest()
     ss << f1;
     cout << (f1);
     cout << endl;
-    
+
     TF f2;
     ss >> f2;
     cout << (f2);
@@ -154,4 +163,13 @@ void serializeTest()
     cout << (g2);
     cout << endl;
 }
-*/
+
+
+int main()
+{
+    eventTest2();
+    serializeTest();
+
+    SYS_EXCEPTION(ExceptionBase, "test");
+    return 0;
+}

@@ -115,5 +115,20 @@ bool TcpSocket::isNonBlockingFD(int32_t fd)
     return (flags & O_NONBLOCK) > 0;
 }
 
+void TcpSocket::setEpollReadCallback(EpollCallback cb)
+{
+    m_epollReadCallback = cb;
+}
+
+void TcpSocket::setEpollWriteCallback(EpollCallback cb)
+{
+    m_epollWriteCallback = cb;
+}
+
+void TcpSocket::setEpollErrorCallback(EpollCallback cb)
+{
+    m_epollErrorCallback = cb;
+}
+
 }}
 

@@ -1,10 +1,13 @@
+/*
+ * Author: LiZhaojia - dantezhu@vip.qq.com
+ *
+ * Last modified: 2014-07-11 18:56 +0800
+ *
+ * Description:  与系统时区设定无关的时间处理工具，无显式冬令时夏令时支持
+ */
 #ifndef WATER_TIME_POINT
 #define WATER_TIME_POINT
 
-/*
-   独立于系统时区设定的时间记录计算工具
-   不支持自动冬令时夏令时切换
-   */
 
 #include <cstdint>
 #include <string>

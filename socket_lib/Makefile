@@ -5,10 +5,11 @@ objects = \
     connection.o\
     socket.o\
     endpoint.o\
+    epoller.o\
 
 
-CC = g++-4.7.3
-cc = g++-4.7.3
+CC = g++4.7
+cc = g++4.7
 
 ln_flags = -L../base -lbase
 cc_flags = -std=c++11 -g
@@ -16,6 +17,7 @@ cc_flags = -std=c++11 -g
 
 target = libnet.a
 test_target = test_server test_client
+test_target_ln_flags = -lrt -lnet -Wl,-rpath,../base
 
 .PHONY:
 all: $(target)
@@ -27,11 +29,14 @@ $(target) : $(objects)
 .PHONY:
 t: $(test_target)
 
+.PHONY:
+t_epoller : $(test_target)
+
 test_server: $(target) test.cpp
-	$(cc) $(cc_flags) -DTEST_SERVER test.cpp -L. -lnet $(ln_flags) -o test_server
+	$(cc) $(cc_flags) -DTEST_SERVER test.cpp -L. $(test_target_ln_flags) $(ln_flags) -o test_server
 
 test_client: $(target) test.cpp
-	$(cc) $(cc_flags) -DTEST_CLIENT test.cpp -L. -lnet $(ln_flags) -o test_client
+	$(cc) $(cc_flags) -DTEST_CLIENT test.cpp -L. $(test_target_ln_flags) $(ln_flags) -o test_client
 
 
 $(objects): %.o: %.cpp
@@ -39,7 +44,8 @@ $(objects): %.o: %.cpp
 
 
 %.d: %.cpp
-	@set -e -x; \
+	@#set -x ; 
+	@set -e ; \
 	rm -f $@; \
 	$(cc) -MM $(cc_flags) $< > $@.$$$$;  \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@;  \
@@ -53,6 +59,6 @@ clean:
 	-rm -f *.o *.d *.d.*
 
 .PHONY: clean_test
-clean_test:
+test_clean:
 	-rm -f test *.o *.d *.d.*
 	-rm -f test_client test_server

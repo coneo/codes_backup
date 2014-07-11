@@ -1,41 +1,81 @@
 #include "listener.h"
 #include "connector.h"
 #include "connection.h"
+#include "epoller.h"
 #include "net_exception.h"
 
 #include <iostream>
 #include <string>
 #include <memory>
 
-#include <unistd.h> //sleep
+#include <unistd.h> //usleep
 
 using namespace std;
 
 using namespace water;
 
-const int16_t port 1024;
+const int16_t port = 1024;
 
 #ifdef TEST_SERVER
+enum class EpollSwitch { ON, OFF, };
 int main()
 {
-    try
+    //try
     {
+        cout << "server is running ..." << endl;
+
+        auto epoller = net::Epoller::create();
         auto listener = net::TcpListener::create();
         listener->bind(port);
         listener->listen();
+        epoller->regSocket(listener.get(), net::Epoller::EventType::READ);
 
-        cout << "server is running ..." << endl;
-        
-        auto connection = listener->accept();
-        cout << "accept a client:" << connection->getRemoteEndpoint().ip
-        << "[" << connection->getRemoteEndpoint().port << "]" << endl;
+        EpollSwitch es = EpollSwitch::ON;
 
-        ::sleep(30);
-        char buf[128] = {0};
-        connection->recv(buf, sizeof(buf));
-        cout << buf << endl;
-        connection->shutdown();
+        net::TcpConnection::Ptr conn;
+        auto listenerAccept = [&](net::TcpSocket*)
+        {
+            conn = listener->accept();
+
+            auto connectionRead = [&](net::TcpSocket*)
+            {
+                char buf[128] = {0};
+                uint32_t recvLen = conn->recv(buf, sizeof(buf));
+                if(recvLen == 0 || recvLen == uint32_t(-1))
+                {
+                    conn->shutdown();
+                    es = EpollSwitch::OFF;
+                }
+                cout << buf << endl;
+            };
+
+            auto connectionError = [&](net::TcpSocket*)
+            {
+                cout << "shutdown connection" << endl;
+                conn->shutdown();
+                es = EpollSwitch::OFF;
+            };
+
+            conn->setEpollReadCallback(connectionRead);
+            conn->setEpollErrorCallback(connectionError);
+
+            epoller->regSocket(conn.get(), net::Epoller::EventType::READ);
+            epoller->regSocket(conn.get(), net::Epoller::EventType::ERROR);
+
+
+            cout << "accept a client:" << conn->getRemoteEndpoint().ip
+            << "[" << conn->getRemoteEndpoint().port << "]" << endl;
+        };
+        listener->setEpollReadCallback(listenerAccept);
+
+
+        while(es == EpollSwitch::ON)
+        {
+            epoller->wait(1);
+//            ::usleep();
+        }
     }
+    /*
     catch(net::NetException& ex)
     {
         cerr << ex.what() << endl;
@@ -43,7 +83,7 @@ int main()
     catch(...)
     {
         cerr << "unknown err" << endl;
-    }
+    }*/
     return 0;
 }
 
@@ -55,13 +95,14 @@ int main()
 {
     try
     {
+        auto epoller = net::Epoller::create();
         auto connector = net::TcpConnector::create("127.0.0.1", port);
         cout << "connect to server ..." << endl;
         auto connection = connector->connect();
         cout << "connected to server:" << connection->getRemoteEndpoint().ip << "[" << connection->getRemoteEndpoint().port << "]" << endl;
         char msg[] = "hello socket";
         connection->send(msg, sizeof(msg));
-        ::sleep(30);
+        ::sleep(5);
         connection->shutdown();
     }
     catch(net::NetException& ex)
