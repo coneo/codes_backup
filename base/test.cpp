@@ -178,7 +178,7 @@ void circularQueue()
     q.traverse([](const int& item)->bool { cout << item << " "; return true; });
     cout << endl;
 
-    for(int i = 0; i < q.size(); ++i)
+    for(int i = 0; !q.empty(); ++i)
     {
         cout << q.get() << " ";
         q.pop();
