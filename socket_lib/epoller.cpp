@@ -72,15 +72,15 @@ void Epoller::wait(int32_t timeout)
         TcpSocket* socket = reinterpret_cast<TcpSocket*>(events[i].data.ptr);
         if(events[i].events & EPOLLIN)
         {
-            socket->m_epollReadCallback(socket);
+            socket->m_epollReadCallback();
         }
         if(events[i].events & EPOLLOUT)
         {
-            socket->m_epollWriteCallback(socket);
+            socket->m_epollWriteCallback();
         }
         if( (events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP) )
         {
-            socket->m_epollErrorCallback(socket);
+            socket->m_epollErrorCallback();
         }
     }
 }

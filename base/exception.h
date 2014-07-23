@@ -4,6 +4,8 @@
 #include <exception>
 #include <string>
 
+namespace water{
+
 
 #define DEFINE_EXCEPTION(ExceptionClass, Base)\
 class ExceptionClass : public Base\
@@ -54,6 +56,6 @@ protected:
     mutable std::string m_what;
 };
 
-
+}
 
 #endif //#ifndef WATER_EXCEPTION_HPP

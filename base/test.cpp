@@ -164,12 +164,38 @@ void serializeTest()
     cout << endl;
 }
 
+#include "circular_queue.h"
+void circularQueue()
+{
+    CircularQueue<int> q;
+
+    for(int i = 0; i < 19; ++i)
+    {
+        if(!q.push(i))
+            break;
+    }
+
+    q.traverse([](const int& item)->bool { cout << item << " "; return true; });
+    cout << endl;
+
+    for(int i = 0; i < q.size(); ++i)
+    {
+        cout << q.get() << " ";
+        q.pop();
+    }
+
+    cout << endl;
+    cout << q.size() << endl;
+
+    return;
+}
 
 int main()
 {
-    eventTest2();
-    serializeTest();
+ //   eventTest2();
+ //   serializeTest();
+    circularQueue();
 
-    SYS_EXCEPTION(ExceptionBase, "test");
+ //   SYS_EXCEPTION(ExceptionBase, "test");
     return 0;
 }

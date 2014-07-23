@@ -3,13 +3,13 @@
 #include <sstream>
 #include <cxxabi.h>
 
+#include <string.h>
+
 #include <stdlib.h>
-#include <execinfo.h>
+//#include <execinfo.h>
 
 
-using namespace std;
-
-
+namespace water{
 
 ExceptionBase::ExceptionBase(const std::string& msg, 
                              const std::string& file, 
@@ -34,9 +34,11 @@ const char* ExceptionBase::what() const noexcept
     if (!m_what.empty())
         return m_what.c_str();
     
-    stringstream ss;
-    ss << m_file << "+" << m_line << "," << exceptionName() << "," << errno << "{" << m_msg << "}";
+    std::stringstream ss;
+    ss << m_file << "+" << m_line << "," << exceptionName() << "," << errno << ":" << ::strerror(errno) << " {" << m_msg << "}";
     m_what = ss.str();
    
     return m_what.c_str();
+}
+
 }

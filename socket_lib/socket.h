@@ -45,7 +45,7 @@ public:
     OnClosedEvent onClosed;
 
 public:
-    typedef std::function<void (TcpSocket*)> EpollCallback;
+    typedef std::function<void ()> EpollCallback;
 
     void setEpollReadCallback(EpollCallback cb);
     void setEpollWriteCallback(EpollCallback cb);

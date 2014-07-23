@@ -20,7 +20,7 @@ const int16_t port = 1024;
 enum class EpollSwitch { ON, OFF, };
 int main()
 {
-    //try
+    try
     {
         cout << "server is running ..." << endl;
 
@@ -33,11 +33,11 @@ int main()
         EpollSwitch es = EpollSwitch::ON;
 
         net::TcpConnection::Ptr conn;
-        auto listenerAccept = [&](net::TcpSocket*)
+        auto listenerAccept = [&]()
         {
             conn = listener->accept();
 
-            auto connectionRead = [&](net::TcpSocket*)
+            auto connectionRead = [&]()
             {
                 char buf[128] = {0};
                 uint32_t recvLen = conn->recv(buf, sizeof(buf));
@@ -46,10 +46,10 @@ int main()
                     conn->shutdown();
                     es = EpollSwitch::OFF;
                 }
-                cout << buf << endl;
+                cout << recvLen << ": " << buf << endl;
             };
 
-            auto connectionError = [&](net::TcpSocket*)
+            auto connectionError = [&]()
             {
                 cout << "shutdown connection" << endl;
                 conn->shutdown();
@@ -71,11 +71,10 @@ int main()
 
         while(es == EpollSwitch::ON)
         {
-            epoller->wait(1);
-//            ::usleep();
+            epoller->wait(0);
+            ::usleep(0);
         }
     }
-    /*
     catch(net::NetException& ex)
     {
         cerr << ex.what() << endl;
@@ -83,7 +82,7 @@ int main()
     catch(...)
     {
         cerr << "unknown err" << endl;
-    }*/
+    }
     return 0;
 }
 
