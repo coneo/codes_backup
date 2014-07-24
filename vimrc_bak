@@ -1,35 +1,41 @@
-"show linenum
+"show line num
 set number
 
 "auto file type
 filetype on
 filetype indent on
 
-"1 tab == 4 spaces
+"1 tab == 4 space
 set tabstop=4
 
-"auto indent and indent width == 4 spaces
+"auto indent and indent width == 4 space
 set smartindent
 set shiftwidth=4
 
-"replace tab with spaces
+"auto replace tab by 4 spaces
+set smarttab
 set expandtab
 
 "high light search result
 set hlsearch
 
-"smart search case sensitive
-set ignorecase smartcase
+"case sensitive is smart
+set ignorecase smartcase 
 
-"file encodings
-set fileencodings=utf-8,utf-16,utf-32
+set fileencodings=utf-8,utf-16,gb18030,gb2312,gbk,utf-32
+"set termencoding=utf-8
+"set encoding=prc
 
-"c/c++ code style
-set cinoptions=g0,i0.5s,+0,:0,10.5s,(0,t0
+"set style of c/c++ code indent, not but almost perfect
+set cinoptions=g0,i0.5s,+0,:0,l0.5s,(0,t0,N-s
 
-"c++11 style
-"let c_no_curly_error=1
+"auto indent when typing c/c++ code
+set cindent
 
+"increase search
+set incsearch
+
+"paste mode
 set pastetoggle=<F9>
 
 "add file header
