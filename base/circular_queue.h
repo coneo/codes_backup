@@ -38,7 +38,7 @@ public:
         m_data[m_end] = item;
         m_end = nextPos(m_end);
 
-        m_empty = false;
+        ++m_size;
         return true;
     }
 
@@ -48,36 +48,32 @@ public:
             return;
 
         m_begin = (m_begin + 1) % maxSize();
-
-        if(m_begin == m_end)
-            m_empty = true;
+        --m_size;
     }
 
-    uint32_t maxSize() const
+    inline uint32_t maxSize() const
     {
         return static_cast<uint32_t>(m_data.size());
     }
 
-    uint32_t size() const
+    inline uint32_t size() const
     {
-        if(empty())
-            return 0;
-
-        if(m_end == m_begin)
-            return maxSize();
-
-        return (m_end + maxSize() - m_begin) % maxSize();
+        return m_size;
     }
 
-    bool empty() const
+    inline bool empty() const
     {
-        return m_empty;
+        return m_size == 0;
+    }
+
+    inline bool full() const
+    {
+        return size() == maxSize();
     }
 
     void traverse(std::function<bool (T&)> callback)
     {
-        const uint32_t itemSize = size();
-        for(uint32_t i = m_begin, traversed = 0; traversed < itemSize; i = nextPos(i), ++traversed)
+        for(uint32_t i = m_begin, traversed = 0; traversed < size(); i = nextPos(i), ++traversed)
         {
             if(!callback(m_data[i]))
                 break;
@@ -86,8 +82,7 @@ public:
 
     void traverse(std::function<bool (const T& callback)> callback) const
     {
-        const uint32_t itemSize = size();
-        for(uint32_t i = m_begin, traversed = 0; traversed < itemSize; i = nextPos(i), ++traversed)
+        for(uint32_t i = m_begin, traversed = 0; traversed < size(); i = nextPos(i), ++traversed)
         {
             if(!callback(m_data[i]))
                 break;
@@ -104,7 +99,7 @@ private:
 private:
     uint32_t m_begin = 0;
     uint32_t m_end = 0;
-    bool m_empty = true;
+    uint32_t m_size = 0;
     std::vector<T> m_data;
 };
 
