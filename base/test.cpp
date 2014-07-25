@@ -175,6 +175,9 @@ void circularQueue()
             break;
     }
 
+    if(q.full())
+        cout << "isFull" << endl;
+
     q.traverse([](const int& item)->bool { cout << item << " "; return true; });
     cout << endl;
 
@@ -190,11 +193,71 @@ void circularQueue()
     return;
 }
 
+#include "reflector.h"
+namespace reflect
+{
+    struct A
+    {
+        A()
+        {
+        }
+        virtual std::string name()
+        {
+            return "A";
+        }
+
+        int code = 0;
+    };
+
+    struct B1 : A
+    {
+        B1(std::string c)
+        : code(c)
+        {
+        }
+        virtual std::string name()
+        {
+            return code + "B1";
+        }
+        std::string code;
+    };
+
+    struct B2 : A
+    {
+        virtual std::string name()
+        {
+            return "B2";
+        }
+    };
+
+    void test()
+    {
+        Reflector<std::string, A> reflector0;
+        reflector0.reg<A>("A");
+
+        Reflector<std::string, A, std::string> reflector1;
+        
+        reflector1.reg<B1>("B1");
+        reflector0.reg<B2>("B2");
+
+        A* l[3] = 
+        {
+            reflector0.produce("A") ,
+            reflector0.produce("B2"),
+            reflector1.produce("B1", "haha"),
+        };
+
+        for(A* a : l)
+            cout << a << ":" << a->name() << endl;
+    }
+}
+
 int main()
 {
+    reflect::test();
  //   eventTest2();
  //   serializeTest();
-    circularQueue();
+ //   circularQueue();
 
  //   SYS_EXCEPTION(ExceptionBase, "test");
     return 0;
