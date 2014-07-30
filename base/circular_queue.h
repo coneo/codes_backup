@@ -22,7 +22,7 @@ public:
     {
     }
 
-    T& get()
+    T& get() const
     {
         if(empty())
             EXCEPTION(GetFromEmptyCircularQueue, "")
@@ -80,7 +80,7 @@ public:
         }
     }
 
-    void traverse(std::function<bool (const T& callback)> callback) const
+    void traverse(std::function<bool (const T& item)> callback) const
     {
         for(uint32_t i = m_begin, traversed = 0; traversed < size(); i = nextPos(i), ++traversed)
         {

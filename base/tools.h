@@ -7,9 +7,9 @@
 #include <algorithm>
 #include <memory>
 
+namespace water{
+namespace tool{
 
-namespace tool
-{
     template<typename T>
     std::string toString(const T& obj)
     {
@@ -52,6 +52,7 @@ namespace tool
             beginPos = endPos + delimiter.length();
         }
     }
+}
 }
 
 #endif //ifndef WATER_NET_BASE_HPP

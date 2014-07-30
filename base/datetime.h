@@ -48,7 +48,7 @@ public:
 
 
     //格式化为字符串和从字符串逆格式化
-    //格式为 YYYYMMDD-hh:mm:ss.UTC+timezoneoffset, 
+    //格式为 YYYYMMDD-hh:mm:ss.timezoneoffset, 
     //如: 2014年1月2日12点30分30秒 东8区  :  "20140102-12:30:30.+28800"
     std::string toString() const;
     void fromString(const std::string& timeStr);
