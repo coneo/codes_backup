@@ -52,6 +52,14 @@ namespace tool{
             beginPos = endPos + delimiter.length();
         }
     }
+
+    template <typename RandomContiner>
+    void tailEraseInRandomAccessContiner(RandomContiner* continer, typename RandomContiner::size_type index)
+    {
+        typename RandomContiner::value_type tmp = continer->back();
+        continer->back() = continer->at(index);
+        continer->at(index) = continer->back();
+    }
 }
 }
 

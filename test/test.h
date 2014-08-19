@@ -24,6 +24,10 @@
 #include <exception>
 #include <stdexcept>
 
+using std::cout;
+using std::cin;
+using std::cerr;
+using std::endl;
 
 template<typename T1, typename T2>
 std::ostream& operator << (std::ostream& os, const std::pair<T1, T2>& pair)

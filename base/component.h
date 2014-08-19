@@ -24,5 +24,10 @@ static std::shared_ptr<ClassName> create(ArgsType&& ... args)\
     return std::make_shared<ClassName>(std::forward<ArgsType>(args)...);\
 }
 
+#define GCC_VERSION (__GNUC__ * 10000 \
+                     + __GNUC_MINOR__ * 100 \
+                     + __GNUC_PATCHLEVEL__)
+
+
 
 #endif

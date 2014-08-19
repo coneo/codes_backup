@@ -5,8 +5,8 @@ objects = \
     scope_guard.o\
     datetime.o\
 
-CC = g++-4.7.3
-cc = g++4.7
+CC = g++
+cc = g++
 
 cc_flags = -std=c++11 -fPIC -g
 
