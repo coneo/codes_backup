@@ -4,6 +4,7 @@ objects = \
     exception.o\
     scope_guard.o\
     datetime.o\
+    buffer.o\
 
 CC = g++
 cc = g++

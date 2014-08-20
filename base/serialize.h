@@ -24,13 +24,13 @@ public:
     typedef Buffer buffer_type;
     typedef typename Buffer::size_type size_type;
 
-    explicit Serialize(Buffer* buffer)
+    explicit Serialize(buffer_type* buffer)
     : m_buffer(buffer), m_holdBuffer(false)
     {
     }
 
     explicit Serialize()
-    : m_buffer(new Buffer), m_holdBuffer(true)
+    : m_buffer(new buffer_type), m_holdBuffer(true)
     {
     }
 
@@ -46,19 +46,19 @@ public:
 
     void assignOutBuffer(const void* buf, uint32_t bufSize)
     {
-        typename Buffer::value_type* p = (typename Buffer::value_type*)buf;
+        typename buffer_type::value_type* p = (typename buffer_type::value_type*)buf;
         reset();
         m_buffer->assign(p, bufSize);
     }
 
-    const Buffer* buffer() const
+    const buffer_type* buffer() const
     {
         return m_buffer;
     }
 
     size_type copy(void* buf, uint32_t bufSize)
     {
-        return m_buffer->copy(reinterpret_cast<typename Buffer::value_type*>(buf), bufSize);
+        return m_buffer->copy(reinterpret_cast<typename buffer_type::value_type*>(buf), bufSize);
     }
 
     size_type tellp() const
@@ -72,12 +72,22 @@ public:
         m_opos = 0;
     }
 
+    void reset(buffer_type* buffer)
+    {
+        if(m_holdBuffer)
+            delete m_holdBuffer;
+
+        m_holdBuffer = false;
+        m_buffer = buffer;
+        m_opos = 0;
+    }
+
     //std::string
     Serialize& operator << (const std::string& str)
     {
         (*this) << str.size();
 
-        m_buffer->append((const typename Buffer::value_type*)str.data(), str.size());
+        m_buffer->append((const typename buffer_type::value_type*)str.data(), str.size());
         m_opos += str.size();
 
         return *this;
@@ -204,7 +214,7 @@ public:
 #else 
         static_assert(std::is_trivial<T>::value, "非trival，须定义operator<<");
 #endif
-        m_buffer->append((const typename Buffer::value_type*)&t, sizeof(t));
+        m_buffer->append((const typename buffer_type::value_type*)&t, sizeof(t));
         m_opos += sizeof(t);
         return *this;
     }
@@ -214,7 +224,7 @@ private:
     template <typename TrivialType>
     void serialize(const TrivialType& t, std::true_type)
     {
-        m_buffer->append((const typename Buffer::value_type*)&t, sizeof(t));
+        m_buffer->append((const typename buffer_type::value_type*)&t, sizeof(t));
         m_opos += sizeof(t);
     }
 
@@ -234,7 +244,7 @@ private:
     }
 
 private:
-    Buffer* m_buffer;
+    buffer_type* m_buffer;
     bool m_holdBuffer;
     size_type m_opos = 0;
 };
@@ -246,7 +256,7 @@ public:
     typedef Buffer buffer_type;
     typedef typename Buffer::size_type size_type;
 
-    explicit Deserialize(const Buffer* buffer)
+    explicit Deserialize(const buffer_type* buffer)
     : m_buffer(buffer)
     {
     }
@@ -256,7 +266,7 @@ public:
     Deserialize(const Deserialize& other) = delete;
     Deserialize& operator = (const Deserialize& other) = delete;
 
-    const Buffer* buffer() const
+    const buffer_type* buffer() const
     {
         return buffer;
     }
@@ -266,7 +276,7 @@ public:
         return m_ipos;
     }
 
-    void reset(const Buffer* buffer)
+    void reset(const buffer_type* buffer)
     {
         m_buffer = buffer;
         m_ipos = 0;
@@ -416,7 +426,7 @@ public:
         static_assert(std::is_trivial<T>::value, "非trival，须定义operator<<");
 #endif
 
-        typename Buffer::value_type* p = (typename Buffer::value_type*)&t;
+        typename buffer_type::value_type* p = (typename buffer_type::value_type*)&t;
         for(size_type i = 0; i < sizeof(t) && m_ipos < m_buffer->size(); ++i)
         {
             *(p + i) = m_buffer->at(m_ipos);
@@ -430,7 +440,7 @@ private:
     template <typename TrivialType>
     void deserialize(const TrivialType& t, std::true_type)
     {
-        typename Buffer::value_type* p = (typename Buffer::value_type*)&t;
+        typename buffer_type::value_type* p = (typename buffer_type::value_type*)&t;
         for(size_type i = 0; i < sizeof(t) && m_ipos < m_buffer->size(); ++i)
         {
             *(p + i) = m_buffer->at(m_ipos);
@@ -472,7 +482,7 @@ private:
     }
 
 private:
-    const Buffer* m_buffer;
+    const buffer_type* m_buffer;
     size_type m_ipos = 0;
 };
 
