@@ -1,9 +1,10 @@
 
 #include "../test/test.h"
-#include "serialize_stream_2.h"
+#include "serialize.h"
 #include "scope_guard.h"
 #include "event.h"
 #include "exception.h"
+#include "buffer.h"
 
 using namespace std;
 
@@ -12,10 +13,10 @@ using namespace water;
 class S
 {
 template<typename Buffer>
-friend SerializeStream<Buffer>& operator << (SerializeStream<Buffer>& ss, const S& s);
+friend Serialize<Buffer>& operator << (Serialize<Buffer>& ss, const S& s);
 
 template<typename Buffer>
-friend DeserializeStream<Buffer>& operator >> (DeserializeStream<Buffer>& ss, S& s);
+friend Deserialize<Buffer>& operator >> (Deserialize<Buffer>& ss, S& s);
 
 friend std::ostream& operator << (std::ostream& os, const S& s);
 
@@ -46,14 +47,14 @@ std::ostream& operator << (std::ostream& os, const S& s)
 }
 
 template<typename Buffer>
-SerializeStream<Buffer>& operator << (SerializeStream<Buffer>& ss, const S& s)
+Serialize<Buffer>& operator << (Serialize<Buffer>& ss, const S& s)
 {
     ss << s.i;
     return ss;
 }
 
 template<typename Buffer>
-DeserializeStream<Buffer>& operator >> (DeserializeStream<Buffer>& ss, S& s)
+Deserialize<Buffer>& operator >> (Deserialize<Buffer>& ss, S& s)
 {
     ss >> s.i;
     return ss;
@@ -82,16 +83,20 @@ void eventTest2()
 
 void serializeTest()
 {
-    typedef SerializeStream SS;
-    typedef DeserializeStreamSafe DS;
+    /*
+    typedef Serialize<std::string> SS;
+    typedef Deserialize<std::string> DS;
+*/
+    char memBuffer[1024];
+    typedef Serialize<RawBuffer> SS;
+    typedef Deserialize<RawBuffer> DS;
 
+    RawBuffer buffer(memBuffer, 1024);
+    SS ss(&buffer);
+/*
     SS ss;
-
-    typedef SerializeStreamSafe::buffer_type Buffer;
-    Buffer buffer;
-
-    //    ss.assignOutBuffer(buffer, 1024);
-
+    ss.buffer().reset(buffer, 1024);
+*/
     {
         ss.reset();
         typedef std::string TA;
@@ -106,7 +111,7 @@ void serializeTest()
         cout << (a2);
         cout << endl;
     }
-    
+    /*
     {
         ss.reset();
         typedef std::vector<int> TB;
@@ -210,7 +215,7 @@ void serializeTest()
         cout << h2;
         cout << endl;
     }
-    
+ */   
 }
 
 #include "circular_queue.h"
@@ -258,6 +263,14 @@ namespace reflect
         int code = 0;
     };
 
+    struct B0 : A
+    {
+        virtual std::string name()
+        {
+            return "B1";
+        }
+    };
+
     struct B1 : A
     {
         B1(std::string c)
@@ -273,9 +286,14 @@ namespace reflect
 
     struct B2 : A
     {
+        B1(std::string code1, std::string code2)
+        : code(c)
+        {
+            A::code = i;
+        }
         virtual std::string name()
         {
-            return "B2";
+            return code1 + code2 + "B2";
         }
     };
 
@@ -287,12 +305,12 @@ namespace reflect
         Reflector<std::string, A, std::string> reflector1;
 
         reflector1.reg<B1>("B1");
-        reflector0.reg<B2>("B2");
+        reflector0.reg<B2>("B0");
 
         A* l[3] = 
         {
             reflector0.produce("A") ,
-            reflector0.produce("B2"),
+            reflector0.produce("B0"),
             reflector1.produce("B1", "haha"),
         };
 

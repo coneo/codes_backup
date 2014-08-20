@@ -20,6 +20,7 @@ private:
     public:
         virtual ~AbstructCreater(){};
         virtual BaseType* create(ConstructorArgs... args) const = 0;
+        virtual BaseType* create() const = 0;
     };
 
     //实际对象构建器
@@ -29,6 +30,11 @@ private:
         BaseType* create(ConstructorArgs... args) const
         {
             return new(std::nothrow) RealType(std::forward<ConstructorArgs>(args)...); 
+        }
+
+        BaseType* create() const
+        {
+            return new(std::nothrow) RealType();
         }
 
         uint32_t sizeofObj() const
@@ -68,6 +74,15 @@ public:
         return it->second->create(std::forward<ConstructorArgs>(args)...);
     }
 
+    BaseType* produce(const Name& name) const
+    {
+        typename std::map<Name, AbstructCreater*>::const_iterator it = createrMap.find(name);
+        if(it == createrMap.end() || nullptr == it->second)
+            return nullptr;
+
+        return it->second->create();
+    }
+
     //得到指定类型的sizeof
     uint32_t sizeofType(const Name& name) const
     {
@@ -83,7 +98,7 @@ private:
 };
 
 
-
+/*
 //谝特化版本， 用于创建构造函数不需参数的对象
 template <typename Name, typename BaseType>
 class Reflector<Name, BaseType>
@@ -157,6 +172,6 @@ public:
 private:
     std::map<Name, AbstructCreater*> createrMap;
 };
-
+*/
 
 }
