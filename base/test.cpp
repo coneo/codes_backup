@@ -1,3 +1,5 @@
+#define WATER_DEBUG
+
 
 #include "../test/test.h"
 #include "serialize.h"
@@ -248,82 +250,11 @@ void circularQueue()
 }
 
 #include "reflector.h"
-namespace reflect
-{
-    struct A
-    {
-        A()
-        {
-        }
-        virtual std::string name()
-        {
-            return "A";
-        }
-
-        int code = 0;
-    };
-
-    struct B0 : A
-    {
-        virtual std::string name()
-        {
-            return "B1";
-        }
-    };
-
-    struct B1 : A
-    {
-        B1(std::string c)
-        : code(c)
-        {
-        }
-        virtual std::string name()
-        {
-            return code + "B1";
-        }
-        std::string code;
-    };
-
-    struct B2 : A
-    {
-        B1(std::string code1, std::string code2)
-        : code(c)
-        {
-            A::code = i;
-        }
-        virtual std::string name()
-        {
-            return code1 + code2 + "B2";
-        }
-    };
-
-    void test()
-    {
-        Reflector<std::string, A> reflector0;
-        reflector0.reg<A>("A");
-
-        Reflector<std::string, A, std::string> reflector1;
-
-        reflector1.reg<B1>("B1");
-        reflector0.reg<B2>("B0");
-
-        A* l[3] = 
-        {
-            reflector0.produce("A") ,
-            reflector0.produce("B0"),
-            reflector1.produce("B1", "haha"),
-        };
-
-        for(A* a : l)
-            cout << a << ":" << a->name() << endl;
-    }
-}
-
 int main()
 {
-    //   reflect::test();
+       test::reflector();
     //   eventTest2();
-    serializeTest();
+   // serializeTest();
     //   circularQueue();
 
     //   SYS_EXCEPTION(ExceptionBase, "test");
