@@ -421,9 +421,9 @@ public:
     {
 
 #if GCC_VERSION >= 40901
-        static_assert(std::is_trivially_copyable<T>::value, "非trivally copyable，须定义operator<<");
+        static_assert(std::is_trivially_copyable<T>::value, "非trivally copyable，须定义operator>>");
 #else 
-        static_assert(std::is_trivial<T>::value, "非trival，须定义operator<<");
+        static_assert(std::is_trivial<T>::value, "非trival，须定义operator>>");
 #endif
 
         typename buffer_type::value_type* p = (typename buffer_type::value_type*)&t;
