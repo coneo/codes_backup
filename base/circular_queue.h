@@ -22,7 +22,7 @@ public:
     {
     }
 
-    T& get() const
+    T& get()
     {
         if(empty())
             EXCEPTION(GetFromEmptyCircularQueue, "")
@@ -30,7 +30,15 @@ public:
         return m_data[m_begin];
     }
 
-    bool push(T item)
+    const T& get() const
+    {
+        if(empty())
+            EXCEPTION(GetFromEmptyCircularQueue, "")
+
+        return m_data[m_begin];
+    }
+
+    bool push(const T& item)
     {
         if(size() == maxSize())
             return false;
