@@ -12,16 +12,10 @@ cc = g++
 cc_flags = -std=c++11 -fPIC -g
 
 target = libbase
-test_target = test
+test_target = test.exe
 
 .PHONY:
 all: $(target).a $(target).so
-
-.PHONY:
-t : $(test_target)
-
-$(test_target) : $(target).so test.cpp
-	$(cc) $(cc_flags) -o $(test_target) test.cpp -L. -lbase -lrt -Wl,-rpath,.
 
 
 $(target).a : $(objects)
@@ -45,7 +39,3 @@ $(target).so : $(objects)
 .PHONY: clean
 clean:
 	-rm -f *.o *.d *.d.* $(target).o $(target).so
-
-.PHONY: clean_test
-clean_test:
-	-rm -f *.o *.d *.d.* $(test_target)

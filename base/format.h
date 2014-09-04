@@ -88,9 +88,7 @@ void formatImpl(std::string* str, const char* f, const T& firstArg, const Args&.
             continue;
         }
 
-        const std::string::size_type holderBegin = i;
-        const std::string::size_type holderEnd = std::string::npos;
-        //下面处理当前f[i] == '{'的情况
+        //f[i] == '{'的情况, 即一个占位符开始
         for(std::string::size_type j = i; f[j] != '\0'; ++j)
         {
             if(f[j] != '}')
@@ -113,45 +111,3 @@ std::string format(const std::string& formatStr, const Args&... args)
     return std::move(ret);
 }
 
-#ifdef UNIT_TEST
-
-class T : public IStringAble
-{
-public:
-    void toString(std::string* str) const override
-    {
-        char buf[128];
-        snprintf(buf, 128, "%s", "class_T");
-        str->append(buf);
-    }
-};
-
-
-#include <sstream>
-#include "../test/performance.h"
-
-void format()
-{
-    static uint64_t num = 0;
-    const char manName[] = "john";
-    std::string str = format("{manName,w:10,holder:0} take {若干个} apple;", manName, 99, T());
-    num += str.size();
-}
-
-void stream1()
-{
-    static uint64_t num = 0;
-    std::stringstream ss;
-    const char manName[] = "john";
-    ss << manName << " take " << 99 << " apple;";
-    num += ss.str().size();
-}
-
-int main()
-{
-    uint32_t times = 1000000;
-    run(format, times);
-    run(stream1, times);
-}
-
-#endif

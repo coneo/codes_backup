@@ -30,7 +30,7 @@ private:
     template <typename RealType>
     class Creater : public AbstructCreater
     {
-        BaseType* create(ConstructorArgs... args) const
+        BaseType* create(ConstructorArgs&&... args) const
         {
             return new(std::nothrow) RealType(std::forward<ConstructorArgs>(args)...); 
         }
@@ -63,7 +63,7 @@ public:
     }
 
     //创建一个指定类型的对象
-    BaseType* produce(const Name& name, ConstructorArgs... args) const
+    BaseType* produce(const Name& name, ConstructorArgs&&... args) const
     {
         typename std::map<Name, AbstructCreater*>::const_iterator it = createrMap.find(name);
         if(it == createrMap.end() || nullptr == it->second)
