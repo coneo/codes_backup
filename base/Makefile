@@ -11,8 +11,7 @@ cc = g++
 
 cc_flags = -std=c++11 -fPIC -g
 
-target = libbase
-test_target = test.exe
+target = libbase.a
 
 .PHONY:
 all: $(target).a $(target).so
