@@ -42,7 +42,7 @@ set pastetoggle=<F9>
 map <F10> :call TitleDet()<cr>'s
 function AddTitle()
     call append(00,"/*")
-    call append(01," * Author: LiZhaojia - dantezhu@vip.qq.com")
+    call append(01," * Author: LiZhaojia(water) waterlzj@gmail.com")
     call append(02," *")
     call append(03," * Last modified: ".strftime("%Y-%m-%d %H:%M %z"))
     call append(04," *")
