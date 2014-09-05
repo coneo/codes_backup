@@ -1,5 +1,5 @@
 /*
- * Author: LiZhaojia - dantezhu@vip.qq.com
+ * Author: LiZhaojia 
  *
  * Last modified: 2014-09-02 19:03 +0800
  *
@@ -8,33 +8,34 @@
 
 #include <string>
 
-//可以通过toString转为字符串的
-class IStringAble
+namespace water
+{
+
+//可以通过appendToString转为字符串的类
+class IFormartAble
 {
 public:
-    virtual void toString(std::string* str) const = 0;
+    virtual void appendToString(std::string* str) const = 0;
 };
-
-
 
 //自定义类型， 需要实现 IStringAble 接口
 template <typename T>
 inline
 typename std::enable_if<std::is_class<T>::value, void>::type
-toString(std::string* str, const T& arg)
+appendToString(std::string* str, const T& arg)
 {
-    const IStringAble* fa = &arg;
-    fa->toString(str);
+    const IFormartAble* fa = &arg;
+    fa->appendToString(str);
 }
 
 //整形
 template <typename T>
 inline
 typename std::enable_if<std::is_integral<T>::value, void>::type 
-toString(std::string* str, T arg)
+appendToString(std::string* str, T arg)
 {
     char buf[24];
-    snprintf(buf, sizeof(buf) - 1, "%lu", arg);
+    snprintf(buf, sizeof(buf) - 1, "%lu", static_cast<uint64_t>(arg));
     str->append(buf);
 }
 
@@ -42,10 +43,10 @@ toString(std::string* str, T arg)
 template <typename T>
 inline
 typename std::enable_if<std::is_floating_point<T>::value, void>::type
-toString(std::string* str, T arg)
+appendToString(std::string* str, T arg)
 {
     char buf[400];
-    snprintf(buf, sizeof(buf), "%lf", arg);
+    snprintf(buf, sizeof(buf), "%lf", static_cast<double>(arg));
     str->append(buf);
 }
 
@@ -53,7 +54,7 @@ toString(std::string* str, T arg)
 template <typename T>
 inline
 typename std::enable_if<std::is_pointer<T>::value, void>::type
-toString(std::string* str, T arg)
+appendToString(std::string* str, T arg)
 {
     char buf[24];
     snprintf(buf, sizeof(buf), "%p", arg);
@@ -61,16 +62,17 @@ toString(std::string* str, T arg)
 }
 
 //std::string
-inline void toString(std::string* str, const std::string& arg)
+inline void appendToString(std::string* str, const std::string& arg)
 {
     str->append(arg);
 }
 
 //c style string
-inline uint32_t toString(std::string* str, const char* arg)
+inline uint32_t appendToString(std::string* str, const char* arg)
 {
     str->append(arg);
 }
+
 
 void formatImpl(std::string* str, const char* f)
 {
@@ -96,7 +98,7 @@ void formatImpl(std::string* str, const char* f, const T& firstArg, const Args&.
 
             //f[j] == '}', 即匹配到了一个占位符
             i = j;
-            toString(str, std::forward<const T>(firstArg));
+            appendToString(str, std::forward<const T>(firstArg));
             return formatImpl(str, f + i + 1, std::forward<const Args>(args)...);
         }
     }
@@ -111,3 +113,4 @@ std::string format(const std::string& formatStr, const Args&... args)
     return std::move(ret);
 }
 
+}

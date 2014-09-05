@@ -4,10 +4,12 @@
 #include "../format.h"
 #include <sstream>
 
-class T : public IStringAble
+using namespace water;
+
+class T : public IFormartAble
 {
 public:
-    void toString(std::string* str) const override
+    void appendToString(std::string* str) const override
     {   
         char buf[128];
         snprintf(buf, 128, "%s", "class_T");
@@ -15,27 +17,46 @@ public:
     }   
 };
 
-void format()
+void formatTest()
 {
     static uint64_t num = 0;
-    const char manName[] = "john";
-    std::string str = format("{manName,w:10,holder:0} take {若干个} apple;", manName, 99, T());
+    const char manName[] = "小明";
+    std::string str = format("{name} take {若干个} apple;", manName, 99);
     num += str.size();
 }
 
-void stream1()
+void streamTest()
 {
     static uint64_t num = 0;
     std::stringstream ss; 
-    const char manName[] = "john";
+    const char manName[] = "小明";
     ss << manName << " take " << 99 << " apple;";
     num += ss.str().size();
+}
+
+void sprintfTest1()
+{
+    static uint64_t num = 0;
+    char buf[128];
+    const char manName[] = "小明";
+    snprintf(buf, sizeof(buf), "%s take %u apple;", manName, 99);
+}
+
+void sprintfTest2()
+{
+    static uint64_t num = 0;
+    char* buf = new char[128]; 
+    const char manName[] = "小明";
+    num += snprintf(buf, 128, "%s take %u apple;", manName, 99);
 }
 
 int main()
 {
     uint32_t times = 1000000;
-    run(format, times);
-    run(stream1, times);
+    performance(formatTest, times);
+    performance(streamTest, times);
+    performance(sprintfTest1, times);
+    performance(sprintfTest2, times);
 }
+
 
