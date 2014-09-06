@@ -4,6 +4,7 @@
 #include "exception.h"
 
 #include <vector>
+#include <functional>
 
 namespace water{
 
@@ -13,7 +14,7 @@ template <typename T>
 class CircularQueue
 {
 public:
-    CircularQueue(uint32_t maxSize = 10)
+    explicit CircularQueue(uint32_t maxSize = 10)
     : m_data(maxSize)
     {
     }
