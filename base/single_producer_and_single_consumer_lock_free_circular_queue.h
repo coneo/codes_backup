@@ -3,7 +3,7 @@
  *
  * Last modified: 2014-09-22 19:19 +0800
  *
- * Description: 环形无锁队列， 单生产者 单消费者，效率考虑，长度为2的幂
+ * Description: 环形无锁队列， 仅支持单生产者和单消费者并发，效率考虑，长度为2的幂，最大为65536
  */
 
 #ifndef WATER_BASE_LOCK_FREE_CIRCULAR_QUEUE_HPP
@@ -35,12 +35,15 @@ class LockFreeCircularQueue final //不可作为基类
     };
 
 public:
-    explicit LockFreeCircularQueue(uint32_t powArg) //队列长度为 pow(2, powArg)
-    : m_begin(0), m_end(0), m_maxSize(1u << (powArg < 16 ? 16 : powArg)), m_data(m_maxSize)
+    explicit LockFreeCircularQueue(uint32_t powArg = 16) //队列长度为 pow(2, powArg)
+    : m_begin(0), m_end(0), m_maxSize(1u << (powArg < 16 ? powArg : 16)), m_data(m_maxSize)
     {
     }
-
     ~LockFreeCircularQueue() = default;
+
+    //noncopyable
+    LockFreeCircularQueue(const LockFreeCircularQueue&) = delete;
+    LockFreeCircularQueue& operator=(const LockFreeCircularQueue&) = delete;
 
     bool push(const T& item)
     {
