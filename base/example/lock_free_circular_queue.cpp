@@ -1,17 +1,20 @@
-#include "../lock_free_circular_queue.h"
+#include "../single_producer_and_single_consumer_lock_free_circular_queue.h"
+#include "../circular_queue.h"
 
 #include "test.h"
 
 #include <thread>
+#include <mutex>
 
 
 using namespace water;
 
 const int64_t N = 10 * 1000 * 1000;
+const int64_t queueSizePow = 16;
 
 void singleThread()
 {
-    LockFreeCircularQueue<int64_t> queue(N);
+    LockFreeCircularQueue<int64_t> queue(5);
 
     for(int64_t i = 0; i < N; ++ i)
         queue.push(i);
@@ -25,18 +28,25 @@ void singleThread()
     cout << sum << endl;
 }
 
-void singleProducerAndSingleConsumer()
+void singleProducerAndSingleConsumerMutexVersion()
 {
-    LockFreeCircularQueue<int64_t> queue(1000); //容量远小于数据量的queue
+    CircularQueue<int64_t> queue(1 << queueSizePow);
+
+    std::mutex mutex;
+
     auto producerDo = [&]()
     {
-        for(int64_t i = 0; i < N; ++i)
+        int64_t i = 0; 
+        while(i < N)
         {
-            while(!queue.push(i))
             {
-//                cout << "full" << endl;
-                std::this_thread::yield();
+                std::unique_lock<std::mutex> lock(mutex);
+                if(queue.full())
+                    continue;
+
+                queue.push(i);
             }
+            ++i;
         }
     };
 
@@ -47,14 +57,57 @@ void singleProducerAndSingleConsumer()
         while (count < N)
         {
             int64_t item = 0;
-            while(queue.pop(&item))
             {
-                ++count;
-                sum += item;
-            }
+                std::unique_lock<std::mutex> lock(mutex);
+                if(queue.empty())
+                    continue;
 
-//            cout << "empty" << endl;
-            std::this_thread::yield();
+                item = queue.get();
+                queue.pop();
+            }
+            ++count;
+            sum += item;
+        }
+
+        cout << sum << endl;
+    };
+
+    std::thread consumer(consumerDo);
+    std::thread procuder(producerDo);
+
+    procuder.join();
+    consumer.join();
+}
+
+void singleProducerAndSingleConsumer()
+{
+    LockFreeCircularQueue<int64_t> queue(queueSizePow); //容量远小于数据量的queue
+    auto producerDo = [&]()
+    {
+        int64_t i = 0;
+        while(i < N)
+        {
+            while(!queue.push(i))
+            {
+            }
+            ++i;
+        }
+    };
+
+    auto consumerDo = [&]()
+    {
+        int64_t sum = 0;
+        int64_t count = 0;
+        while (count < N)
+        {
+            int64_t item = 0;
+            if(!queue.pop(&item))
+            {
+               // std::this_thread::yield();
+                continue;
+            }
+            ++count;
+            sum += item;
         }
 
         cout << sum << endl;
@@ -123,10 +176,11 @@ int main()
     int64_t sum = 0;
     for(int64_t i = 0; i < N; ++i)
         sum += i;
-    cout << sum << " " << sum * 5 << endl;
+
     singleThread();
-    singleProducerAndSingleConsumer();
-    multiProducerAndMultiConsumer();
+    performance(singleProducerAndSingleConsumer, 1);
+    performance(singleProducerAndSingleConsumerMutexVersion, 1);
+//    multiProducerAndMultiConsumer();
     return 0;
 }
 
