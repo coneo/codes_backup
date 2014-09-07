@@ -37,6 +37,7 @@ std::ostream& operator << (std::ostream& os, const std::pair<T1, T2>& pair)
     os << ',';
     os << pair.second << " ";
     os << "}" << " ";
+    return os;
 }
 
 

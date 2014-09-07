@@ -6,8 +6,8 @@
  * Description: 环形无锁队列， 仅支持单生产者和单消费者并发，效率考虑，长度为2的幂，最大为65536
  */
 
-#ifndef WATER_BASE_LOCK_FREE_CIRCULAR_QUEUE_HPP
-#define WATER_BASE_LOCK_FREE_CIRCULAR_QUEUE_HPP
+#ifndef WATER_BASE_LOCK_FREE_CIRCULAR_QUEUE_SS_HPP
+#define WATER_BASE_LOCK_FREE_CIRCULAR_QUEUE_SS_HPP
 
 #include <vector>
 #include <atomic>
@@ -15,7 +15,7 @@
 namespace water{
 
 template <typename T>
-class LockFreeCircularQueue final //不可作为基类
+class LockFreeCircularQueueSPSC final //不可作为基类
 {
     struct Cell
     {
@@ -35,15 +35,20 @@ class LockFreeCircularQueue final //不可作为基类
     };
 
 public:
-    explicit LockFreeCircularQueue(uint32_t powArg = 16) //队列长度为 pow(2, powArg)
+    explicit LockFreeCircularQueueSPSC(uint32_t powArg = 16) //队列长度为 pow(2, powArg)
     : m_begin(0), m_end(0), m_maxSize(1u << (powArg < 16 ? powArg : 16)), m_data(m_maxSize)
     {
     }
-    ~LockFreeCircularQueue() = default;
+    ~LockFreeCircularQueueSPSC() = default;
 
     //noncopyable
-    LockFreeCircularQueue(const LockFreeCircularQueue&) = delete;
-    LockFreeCircularQueue& operator=(const LockFreeCircularQueue&) = delete;
+    LockFreeCircularQueueSPSC(const LockFreeCircularQueueSPSC&) = delete;
+    LockFreeCircularQueueSPSC& operator=(const LockFreeCircularQueueSPSC&) = delete;
+
+    bool isLockFree() const
+    {
+        return m_data[0].status.is_lock_free();
+    }
 
     bool push(const T& item)
     {

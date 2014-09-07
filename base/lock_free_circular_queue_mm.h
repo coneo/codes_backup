@@ -1,5 +1,13 @@
-#ifndef WATER_BASE_M_LOCK_FREE_CIRCULAR_QUEUE_HPP
-#define WATER_BASE_M_LOCK_FREE_CIRCULAR_QUEUE_HPP
+/*
+ * Author: LiZhaojia - dantezhu@vip.qq.com
+ *
+ * Last modified: 2014-09-07 08:51 +0800
+ *
+ * Description: 环形无锁队列， 支持多生产者和多消费者， 效率比 单生产者单消费者的版本 低
+ */
+
+#ifndef WATER_BASE_M_LOCK_FREE_CIRCULAR_QUEUE_MM_HPP
+#define WATER_BASE_M_LOCK_FREE_CIRCULAR_QUEUE_MM_HPP
 
 #include <vector>
 #include <atomic>
@@ -7,11 +15,11 @@
 namespace water{
 
 template <typename T>
-class MLockFreeCircularQueue
+class LockFreeCircularQueueMPMC final //不可作为基类
 {
     struct Cell
     {
-        enum class Status : uint_fast32_t 
+        enum class Status : uint8_t 
         {
             empty, 
             full, 
@@ -28,7 +36,7 @@ class MLockFreeCircularQueue
 
     struct Pos
     {
-        enum class Operation : uint_fast32_t
+        enum class Operation : uint8_t
         {
             writing,
             reading,
@@ -41,20 +49,23 @@ class MLockFreeCircularQueue
         }
 
         Operation operation;
-        uint_fast32_t index;
+        uint32_t index;
     };
 
 public:
-    explicit MLockFreeCircularQueue(uint64_t powArg = 16)
+    explicit LockFreeCircularQueueMPMC(uint64_t powArg = 16)
     : m_begin(Pos(Pos::Operation::none, 0)), m_end(Pos(Pos::Operation::none, 0)), m_maxSize(1u << powArg), m_data(m_maxSize)
     {
     }
+    ~LockFreeCircularQueueMPMC() = default;
 
-    ~MLockFreeCircularQueue() = default;
+    //noncopyable
+    LockFreeCircularQueueMPMC(const LockFreeCircularQueueMPMC&) = delete;
+    LockFreeCircularQueueMPMC& operator=(const LockFreeCircularQueueMPMC&) = delete;
 
     bool isLockFree() const
     {
-        return m_begin.is_lock_free();
+        return m_begin.is_lock_free() && m_data[0].status.is_lock_free();
     }
 
     bool push(const T& item)
@@ -110,7 +121,7 @@ public:
 
             if(m_data[index].status.load(std::memory_order_relaxed) == Cell::Status::empty) //格子为空, 即空队列, 还原m_begin, 并继续重试
             {
-                m_end.store(Pos(Pos::Operation::none, oldBegin.index), std::memory_order_relaxed);
+                m_begin.store(Pos(Pos::Operation::none, oldBegin.index), std::memory_order_relaxed);
                 continue;
             }
 
