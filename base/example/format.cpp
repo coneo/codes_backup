@@ -6,10 +6,10 @@
 
 using namespace water;
 
-class T : public IFormartAble
+class T
 {
 public:
-    void appendToString(std::string* str) const override
+    void appendToString(std::string* str) const
     {   
         char buf[128];
         snprintf(buf, 128, "%s", "class_T");
@@ -21,7 +21,7 @@ void formatTest()
 {
     static uint64_t num = 0;
     const char manName[] = "小明";
-    std::string str = format("{name} take {若干个} apple;", manName, 99);
+    std::string str = format("{} take {} apple;", manName, 99);
     num += str.size();
 }
 
@@ -52,6 +52,8 @@ void sprintfTest2()
 
 int main()
 {
+
+    cout << format("abcdefg{}", T()) << endl;
     uint32_t times = 1000000;
     performance(formatTest, times);
     performance(streamTest, times);

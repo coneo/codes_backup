@@ -8,7 +8,6 @@
 *.swp
 core
 core.*
-test
 tmp
 temp
 test_*
