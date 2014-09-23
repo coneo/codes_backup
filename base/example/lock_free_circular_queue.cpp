@@ -1,4 +1,5 @@
 #include "../single_producer_and_single_consumer_lock_free_circular_queue.h"
+#include "../m_lock_free_circular_queue.h"
 #include "../circular_queue.h"
 
 #include "test.h"
@@ -9,8 +10,8 @@
 
 using namespace water;
 
-const int64_t N = 10 * 1000 * 1000;
-const int64_t queueSizePow = 16;
+const int64_t N = 10;// * 1000 * 1000;
+const int64_t queueSizePow = 3;
 
 void singleThread()
 {
@@ -81,7 +82,7 @@ void singleProducerAndSingleConsumerMutexVersion()
 
 void singleProducerAndSingleConsumer()
 {
-    LockFreeCircularQueue<int64_t> queue(queueSizePow); //容量远小于数据量的queue
+    water::MLockFreeCircularQueue<int64_t> queue(queueSizePow); //容量远小于数据量的queue
     auto producerDo = [&]()
     {
         int64_t i = 0;
@@ -122,35 +123,43 @@ void singleProducerAndSingleConsumer()
 
 void multiProducerAndMultiConsumer()
 {
-    LockFreeCircularQueue<int64_t> queue(10);
+    water::MLockFreeCircularQueue<int64_t> queue(queueSizePow); //容量远小于数据量的queue
     auto producerDo = [&]()
     {
-        for(int64_t i = 0; i < N; ++i)
+        int64_t i = 0;
+        while(i < N)
         {
             while(!queue.push(i))
-            {//已满
- //               std::this_thread::yield(); 
+            {
             }
+            ++i;
         }
     };
 
-    std::atomic<int64_t> count(0);
-    std::atomic<int64_t> sum(0);
     auto consumerDo = [&]()
     {
-        while (count < N * 5)
+        int64_t sum = 0;
+        int64_t count = 0;
+        while (count < N)
         {
             int64_t item = 0;
-            while(queue.pop(&item))
+            if(!queue.pop(&item))
             {
-                count.fetch_add(1, std::memory_order_relaxed);
-                sum.fetch_add(item, std::memory_order_relaxed);
+               // std::this_thread::yield();
+                continue;
             }
-
-//            std::this_thread::yield();
+            ++count;
+            sum += item;
         }
 
+        cout << sum << endl;
     };
+
+    std::thread consumer(consumerDo);
+    std::thread procuder(producerDo);
+
+    procuder.join();
+    consumer.join();
 
     std::vector<std::thread> consumers(5);
     std::vector<std::thread> producers(5);
@@ -167,8 +176,6 @@ void multiProducerAndMultiConsumer()
         producers[i].join();
         consumers[i].join();
     }
-
-    cout << sum << endl;
 }
 
 int main()
@@ -176,12 +183,12 @@ int main()
     int64_t sum = 0;
     for(int64_t i = 0; i < N; ++i)
         sum += i;
-
-    singleThread();
+    cout << sum << endl;
+//    singleThread();
     performance(singleProducerAndSingleConsumer, 1);
-    performance(singleProducerAndSingleConsumerMutexVersion, 1);
+//    performance(singleProducerAndSingleConsumerMutexVersion, 1);
 //    multiProducerAndMultiConsumer();
-    return 0;
+//    return 0;
 }
 
 
