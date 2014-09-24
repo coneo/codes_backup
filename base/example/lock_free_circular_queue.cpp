@@ -164,8 +164,10 @@ void singleProducerAndSingleConsumer()
 void multiProducerAndMultiConsumer()
 {
     water::LockFreeCircularQueueMPMC<int64_t> queue(queueSizePow); //容量远小于数据量的queue
+    if(!queue.isLockFree())
+        cout << "Not lock free!" << endl;
 
-    const int64_t consumerNum = 1;
+    const int64_t consumerNum = 2;
     const int64_t producerNum = 5;
 
     std::vector<int64_t> threadSum(consumerNum, 0);
@@ -230,7 +232,7 @@ void multiProducerAndMultiConsumerMutexVersion()
 {
     CircularQueue<int64_t> queue(1 << queueSizePow); //容量远小于数据量的queue
 
-    const int64_t consumerNum = 1;
+    const int64_t consumerNum = 2;
     const int64_t producerNum = 5;
 
     std::vector<int64_t> threadSum(consumerNum, 0);
@@ -306,6 +308,9 @@ int main()
     for(int64_t i = 0; i < N; ++i)
         sum += i;
     cout << sum << endl;
+
+    multiProducerAndMultiConsumer();
+
     const int testTimes = 10;
     PERFORMANCE(singleThread, testTimes);
     PERFORMANCE(singleThreadUnsafe, testTimes);
@@ -313,7 +318,6 @@ int main()
     PERFORMANCE(singleProducerAndSingleConsumerMutexVersion, testTimes);
     PERFORMANCE(multiProducerAndMultiConsumer, testTimes);
     PERFORMANCE(multiProducerAndMultiConsumerMutexVersion, testTimes);
-    
     return 0;
 }
 
