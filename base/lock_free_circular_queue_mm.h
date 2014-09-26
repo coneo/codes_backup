@@ -64,7 +64,7 @@ public:
                 return false;
 
             uint32_t oldEnd = m_end.load(std::memory_order_acquire);//队尾
-            uint_fast32_t index = realIndex(oldEnd);
+            uint32_t index = realIndex(oldEnd);
 
             typename Cell::Status oldStatus = m_data[index].status.load(std::memory_order_acquire);
             if(oldStatus != Cell::Status::empty)
@@ -74,7 +74,6 @@ public:
                 continue;
 
             //队尾后移
-            uint32_t tmp = oldEnd;
             if(!m_end.compare_exchange_weak(oldEnd, oldEnd + 1))
             {
                 m_data[index].status.store(Cell::Status::empty, std::memory_order_relaxed);
