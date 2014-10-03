@@ -74,7 +74,7 @@ inline uint32_t appendToString(std::string* str, const char* arg)
 }
 
 
-void formatImpl(std::string* str, const char* f)
+inline void formatImpl(std::string* str, const char* f)
 {
     str->append(f);
 }

@@ -5,6 +5,9 @@ objects = \
     scope_guard.o\
     datetime.o\
     buffer.o\
+    log_file.o\
+    logger.o\
+    backend_logger.o\
 
 CC = g++
 cc = g++
